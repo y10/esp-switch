@@ -1,0 +1,332 @@
+<html>
+
+<head>
+    <title>Switch</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-title" content="Switch">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Wifi Switch">
+    <!-- shortcut::html\icon.png -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" sizes="180x180" href="./icon.png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <link rel="apple-touch-startup-image" href="./apple-touch-icon.png">
+    <link rel="stylesheet" type="text/css" href="./css/slider.css">
+    <link rel="stylesheet" type="text/css" href="./css/switch.css">
+    <style>
+        body::-webkit-scrollbar {
+            display: none;
+            background: black;
+        }
+
+        table,
+        section,
+        button,
+        select,
+        input[type=text],
+        textarea {
+            font-size: 3em !important;
+            border-width: 0px;
+            background-color: transparen;
+            background: transparent;
+            color: #70C041;
+        }
+
+        table {
+            font-size: 2em !important;
+            color: #70C041;
+        }
+
+        button,
+        input[type=text] {
+            -webkit-transition: all 0.30s ease-in-out;
+            -moz-transition: all 0.30s ease-in-out;
+            -ms-transition: all 0.30s ease-in-out;
+            -o-transition: all 0.30s ease-in-out;
+            transition: all 0.30s ease-in-out;
+            outline: none;
+            font-size: 1em !important;
+            border: solid 1px rgba(112, 192, 65, 0.3);
+            padding: 2px 5px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        button {
+            border: none 0px;
+            cursor: pointer;
+        }
+
+        button>svg {
+            opacity: 0.5;
+            transition: all 0.66s ease;
+            -webkit-transition: all 0.66s ease;
+        }
+
+        button:hover>svg {
+            opacity: 1;
+        }
+
+        input[type=text]:focus {
+            border: solid 1px #70C041;
+        }
+
+
+        ::-webkit-input-placeholder {
+            /* Chrome/Opera/Safari */
+            color: rgba(112, 192, 65, 0.3);
+        }
+
+        ::-moz-placeholder {
+            /* Firefox 19+ */
+            color: rgba(112, 192, 65, 0.3)
+        }
+
+        :-ms-input-placeholder {
+            /* IE 10+ */
+            color: rgba(112, 192, 65, 0.3)
+        }
+
+        :-moz-placeholder {
+            /* Firefox 18- */
+            color: rgba(112, 192, 65, 0.3)
+        }
+
+        label {
+            opacity: 0.5;
+        }
+
+        input[type=text]:active,
+        textarea:active,
+        input[type=text]:focus,
+        textarea:focus {
+            opacity: 1;
+        }
+
+        section>button,
+        section>select,
+        section>input {
+            font-size: 1em !important;
+            cursor: pointer;
+        }
+
+        select {
+            background: black;
+        }
+
+        #device-name {
+            width:60vw;
+            height:34px;
+            transition: all 0.66s ease;
+            -webkit-transition: all 0.66s ease;
+        }
+
+        #time {
+            font: 1em "Sans Serif", "Apple Symbols", serif;
+            display: block;
+            position: absolute;
+            z-index: 10;
+            top: 20px;
+            margin-left: auto;
+            left: 0;
+            margin-right: auto;
+            right: 0;
+            text-align: center;
+            color: #70C041;
+            opacity: 0.5;
+            -webkit-transition: all 0.30s ease-in-out;
+            -moz-transition: all 0.30s ease-in-out;
+            -ms-transition: all 0.30s ease-in-out;
+            -o-transition: all 0.30s ease-in-out;
+            transition: all 0.30s ease-in-out;
+        }
+        
+        #time.hidden{
+            opacity: 0;
+        }
+
+        #menu {
+
+            line-height: 0;
+            display: inline-block;
+            position: fixed;
+            z-index: 10;
+            top: 15px;
+            right: 20px;
+            cursor: pointer;
+            color: #70C041;
+            opacity: 0.5;
+            transition: all 0.66s ease;
+            -webkit-transition: all 0.66s ease;
+        }
+
+        #menu:hover
+        {
+            opacity: 1;
+        }
+
+        .bar1,
+        .bar2,
+        .bar3 {
+            width: 35px;
+            height: 5px;
+            background-color: rgba(114, 192, 65, 0.664);
+            margin: 6px 0;
+            transition: 0.4s;
+        }
+
+        /* Rotate first bar */
+
+        .settings .bar1 {
+            -webkit-transform: rotate(-45deg) translate(-9px, 6px);
+            transform: rotate(-45deg) translate(-9px, 6px);
+        }
+
+        /* Fade out the second bar */
+
+        .settings .bar2 {
+            opacity: 0;
+        }
+
+        /* Rotate last bar */
+
+        .settings .bar3 {
+            -webkit-transform: rotate(45deg) translate(-8px, -8px);
+            transform: rotate(45deg) translate(-8px, -8px);
+        }
+    </style>
+    <script src="./js/slider.js"></script>
+    <script src="./js/core/wss-service.js"></script>
+    <script src="./js/core/http-service.js"></script>
+    <script src="./js/modules/time-module.js"></script>
+    <script src="./js/modules/switch-module.js"></script>
+    <script src="./js/modules/schedule-module.js"></script>
+    <script src="./js/modules/settings-module.js"></script>
+    <script>
+        function Toggle(slides) {
+
+            var menu = document.getElementById("menu");
+            if (menu) {
+                if (menu.classList.contains('settings')) {
+                    menu.classList.remove('settings');
+                    menu.slides.Hide();
+                    pages.Show();
+                }
+                else {
+                    menu.classList.add('settings');
+                    pages.Hide();
+                    slides.Show();
+                    menu.slides = slides;
+                }
+            }
+        }
+
+        function loadSettings(el) {
+            app.modules.settings.load(el);
+        }
+
+        function loadSwitch(el) {
+            app.modules.main.load(el);
+        }
+
+        function loadTime(el) {
+            app.modules.time.load(el);
+        }
+
+        function loadSchedule(el, day, caption) {
+            app.modules.schedule.load(el, day, caption);
+        }
+        
+    </script>
+</head>
+
+<body>
+
+    <div id="settings" class="slide-window" style="display:none">
+
+        <ol class="slides">
+            <li class="slide" onload="loadSettings(this)">
+                <div class="slide-container">
+                    <input id="device-name" type="text" placeholder="Device Name">
+                </div>
+            </li>
+        </ol>
+    </div>
+
+    <div id="schedule" class="slide-window" style="display:none">
+
+        <ol class="slides">
+            <li onload="loadSchedule(this, '', 'Everyday')"></li>
+            <li onload="loadSchedule(this, 'mon', 'Monday')"></li>
+            <li onload="loadSchedule(this, 'tue', 'Tuesday')"></li>
+            <li onload="loadSchedule(this, 'wed', 'Wednesday')"></li>
+            <li onload="loadSchedule(this, 'fri', 'Friday')"></li>
+            <li onload="loadSchedule(this, 'thu', 'Thursday')"></li>
+            <li onload="loadSchedule(this, 'sun', 'Sunday')"></li>
+        </ol>
+
+        <div class="slides-nav"></div>
+
+    </div>
+
+    <div id="pages" class="slide-window">
+
+        <ol class="slides" start="1">
+            <li onload="loadSwitch(this)"></li>
+            <li class="slide">
+                <div class="slide-container">
+                    <button onclick="Toggle(schedule)">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50px" height="50px"
+                            viewBox="0 0 515.1 515.1" style="enable-background:new 0 0 515.1 515.1" xml:space="preserve">
+                            <g id="access-alarms">
+                                <path d="M512.55,99.45L395.25,0L362.1,38.25l117.3,99.45L512.55,99.45z M153,40.8L119.85,2.55L2.55,99.45L35.7,137.7L153,40.8z     M270.3,158.1h-38.25v153l119.85,73.951l20.4-30.602l-102-61.199V158.1z M257.55,56.1c-127.5,0-229.5,102-229.5,229.5    c0,127.5,102,229.5,229.5,229.5s229.5-102,229.5-229.5C487.05,158.1,385.05,56.1,257.55,56.1z M257.55,464.1    c-99.45,0-178.5-79.049-178.5-178.5c0-99.45,79.05-178.5,178.5-178.5s178.5,79.05,178.5,178.5    C436.05,385.051,357,464.1,257.55,464.1z"
+                                    style="fill: rgb(145, 220, 90);"></path>
+                            </g>
+                        </svg>
+                    </button>
+                </div>
+            </li>
+        </ol>
+
+        <div class="slides-nav"></div>
+
+    </div>
+
+    <script>
+        (function () {
+
+            pages = new Slider(document.getElementById("pages"));
+
+        })();
+    </script>
+
+    <div id="time" class="hidden"></div>
+    <div id="menu" onclick="Toggle(settings)">
+        <div class="bar1"></div>
+        <div class="bar2"></div>
+        <div class="bar3"></div>
+    </div>
+
+    <script>
+        (function () {
+
+            loadTime(document.getElementById("time"));
+
+            settings = new Slider(document.getElementById("settings"));
+            schedule = new Slider(document.getElementById("schedule"));
+
+            Http.getScript("https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js", true, function () {
+
+                schedule.attachSwipeHandlers();
+                settings.attachSwipeHandlers();
+                pages.attachSwipeHandlers();
+                
+            });
+        })();
+    </script>
+
+</body>
+
+</html>
