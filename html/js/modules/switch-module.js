@@ -1,7 +1,3 @@
-if (typeof app === "undefined") { app = {} }
-if (typeof app.modules === "undefined"){ app.modules = {} }
-
-
 app.modules.main = (function (http, wss) {
     
     return {

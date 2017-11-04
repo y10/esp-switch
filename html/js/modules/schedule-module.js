@@ -1,24 +1,12 @@
-if (typeof app === "undefined") { app = {} }
-if (typeof app.modules === "undefined"){ app.modules = {} }
+app.modules.schedule = (function (http, DOM) {
 
-app.modules.schedule = (function (http) {
-    
     return {
         load: function (el, day, caption) {
-            
-            function createSpan(html) {
-                var span = document.createElement('span');
-                for (var key in html) {
-                    if (html.hasOwnProperty(key)) {
-                        span[key] = html[key];
-                    }
-                }
-                return span;
-            }
+
 
             function createHeader() {
 
-                return createSpan({
+                return DOM.createSpan({
                     className: "slide-header",
                     innerText: caption
                 });;
@@ -38,7 +26,7 @@ app.modules.schedule = (function (http) {
                 label.appendChild(span)
 
                 label.render = function (state) {
-                    if(state) {
+                    if (state) {
                         input.checked = (state.enabled) ? true : false;
                     }
                 }
@@ -59,13 +47,7 @@ app.modules.schedule = (function (http) {
 
             function createHourSelect() {
 
-                var select = document.createElement('select');
-
-                for (var index = 0; index < 24; index++) {
-                    var option = document.createElement('option');
-                    option.innerText = ("0" + index).slice(-2);
-                    select.appendChild(option);
-                }
+                var select = DOM.createSelectFromArray(Array.apply(null, Array(24)).map(function (x, y) { return ("0" + y).slice(-2); }));
 
                 select.render = function (state) {
                     select.disabled = true;
@@ -116,13 +98,7 @@ app.modules.schedule = (function (http) {
 
             function createMinuteSelect() {
 
-                var select = document.createElement('select');
-
-                for (var index = 0; index < 60; index++) {
-                    var option = document.createElement('option');
-                    option.innerText = ("0" + index).slice(-2);
-                    select.appendChild(option);
-                }
+                var select = DOM.createSelectFromArray(Array.apply(null, Array(60)).map(function (x, y) { return ("0" + y).slice(-2); }));
 
                 select.render = function (state) {
                     select.disabled = true;
@@ -160,27 +136,12 @@ app.modules.schedule = (function (http) {
                     }
                 }
 
-                select.getValue = function () {
-                    var selectedIndex = select.selectedIndex;
-                    if (selectedIndex != -1) {
-                        return select.options[selectedIndex].text;
-                    }
-
-                    return 0;
-                }
-
                 return select;
             }
 
             function createDurationSelect() {
 
-                var select = document.createElement('select');
-
-                for (var index = 0; index <= 30; index += 5) {
-                    var option = document.createElement('option');
-                    option.innerText = ("0" + index).slice(-2);
-                    select.appendChild(option);
-                }
+                var select = DOM.createSelectFromArray(Array.apply(null, Array(13)).map(function (x, y) { return ("0" + (y * 5)).slice(-2); }));
 
                 select.render = function (state) {
                     select.disabled = true;
@@ -200,15 +161,6 @@ app.modules.schedule = (function (http) {
                     select.disabled = false;
                 }
 
-                select.getValue = function () {
-                    var selectedIndex = select.selectedIndex;
-                    if (selectedIndex != -1) {
-                        return select.options[selectedIndex].text;
-                    }
-
-                    return 0;
-                }
-
                 select.onchange = function (e) {
                     if (!select.disabled) {
                         select.disabled = true;
@@ -226,16 +178,15 @@ app.modules.schedule = (function (http) {
                 return select;
             }
 
-            function refresh(state)
-            {
+            function refresh(state) {
                 if (state) {
 
                     hours.render(state);
-                    
+
                     minutes.render(state);
 
                     duration.render(state);
-                    
+
                     swtch.render(state);
                 }
             }
@@ -250,12 +201,12 @@ app.modules.schedule = (function (http) {
             var hours = createHourSelect();
             div.appendChild(hours);
 
-            div.appendChild(createSpan({ innerText: ":" }));
+            div.appendChild(DOM.createSpan({ innerText: ":" }));
 
             var minutes = createMinuteSelect();
             div.appendChild(minutes);
 
-            div.appendChild(createSpan({ innerHTML: "&nbsp;" }));
+            div.appendChild(DOM.createSpan({ innerHTML: "&nbsp;" }));
 
             var duration = createDurationSelect();
             div.appendChild(duration);
@@ -266,9 +217,7 @@ app.modules.schedule = (function (http) {
                 });
             }
 
-            el.deactivate = function () { };
-
             el.appendChild(div);
         }
     };
-})(Http);
+})(Http, app.DOM);

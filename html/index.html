@@ -21,22 +21,29 @@
             background: black;
         }
 
+
+
         table,
-        section,
         button,
+        section,
         select,
-        input[type=text],
-        textarea {
-            font-size: 3em !important;
-            border-width: 0px;
+        textarea,
+        input[type=text] {
             background-color: transparen;
             background: transparent;
             color: #70C041;
         }
 
-        table {
-            font-size: 2em !important;
-            color: #70C041;
+        button,
+        select,
+        textarea,
+        input[type=text] {
+            border-width: 0px;
+        }
+
+        table,
+        section {
+            font-size: 1em !important;
         }
 
         button,
@@ -53,26 +60,6 @@
             border-radius: 5px;
             text-align: center;
         }
-
-        button {
-            border: none 0px;
-            cursor: pointer;
-        }
-
-        button>svg {
-            opacity: 0.5;
-            transition: all 0.66s ease;
-            -webkit-transition: all 0.66s ease;
-        }
-
-        button:hover>svg {
-            opacity: 1;
-        }
-
-        input[type=text]:focus {
-            border: solid 1px #70C041;
-        }
-
 
         ::-webkit-input-placeholder {
             /* Chrome/Opera/Safari */
@@ -94,8 +81,23 @@
             color: rgba(112, 192, 65, 0.3)
         }
 
-        label {
+        button {
+            border: none 0px;
+            cursor: pointer;
+        }
+
+        button>svg {
             opacity: 0.5;
+            transition: all 0.66s ease;
+            -webkit-transition: all 0.66s ease;
+        }
+
+        button:hover>svg {
+            opacity: 1;
+        }
+
+        input[type=text]:focus {
+            border: solid 1px #70C041;
         }
 
         input[type=text]:active,
@@ -105,46 +107,30 @@
             opacity: 1;
         }
 
-        section>button,
-        section>select,
-        section>input {
-            font-size: 1em !important;
-            cursor: pointer;
+        label {
+            opacity: 0.5;
         }
 
-        select {
+
+        section span,
+        section input[type='text'],
+        section select {
+            background: transparent;
+            font-size: 3em !important;
+        }
+
+        section select option {
             background: black;
         }
 
-        #device-name {
-            width:60vw;
-            height:34px;
+        section input[type='text'] {
+            max-width: 80vw;
+            width: 100%;
+            line-height: 1em;
             transition: all 0.66s ease;
             -webkit-transition: all 0.66s ease;
-        }
-
-        #time {
-            font: 1em "Sans Serif", "Apple Symbols", serif;
-            display: block;
-            position: absolute;
-            z-index: 10;
-            top: 20px;
-            margin-left: auto;
-            left: 0;
-            margin-right: auto;
-            right: 0;
-            text-align: center;
-            color: #70C041;
-            opacity: 0.5;
-            -webkit-transition: all 0.30s ease-in-out;
-            -moz-transition: all 0.30s ease-in-out;
-            -ms-transition: all 0.30s ease-in-out;
-            -o-transition: all 0.30s ease-in-out;
-            transition: all 0.30s ease-in-out;
-        }
-        
-        #time.hidden{
-            opacity: 0;
+            font-size: 3em !important;
+            border: solid 1px transparent;
         }
 
         #menu {
@@ -162,8 +148,7 @@
             -webkit-transition: all 0.66s ease;
         }
 
-        #menu:hover
-        {
+        #menu:hover {
             opacity: 1;
         }
 
@@ -198,9 +183,10 @@
         }
     </style>
     <script src="./js/slider.js"></script>
-    <script src="./js/core/wss-service.js"></script>
-    <script src="./js/core/http-service.js"></script>
-    <script src="./js/modules/time-module.js"></script>
+    <script src="./js/services/wss-service.js"></script>
+    <script src="./js/services/http-service.js"></script>
+    <script src="./js/app/app.dom.js"></script>
+    <script src="./js/app/app.modules.js"></script>
     <script src="./js/modules/switch-module.js"></script>
     <script src="./js/modules/schedule-module.js"></script>
     <script src="./js/modules/settings-module.js"></script>
@@ -231,14 +217,10 @@
             app.modules.main.load(el);
         }
 
-        function loadTime(el) {
-            app.modules.time.load(el);
-        }
-
         function loadSchedule(el, day, caption) {
             app.modules.schedule.load(el, day, caption);
         }
-        
+
     </script>
 </head>
 
@@ -247,11 +229,7 @@
     <div id="settings" class="slide-window" style="display:none">
 
         <ol class="slides">
-            <li class="slide" onload="loadSettings(this)">
-                <div class="slide-container">
-                    <input id="device-name" type="text" placeholder="Device Name">
-                </div>
-            </li>
+            <li class="slide" onload="loadSettings(this)"></li>
         </ol>
     </div>
 
@@ -302,7 +280,6 @@
         })();
     </script>
 
-    <div id="time" class="hidden"></div>
     <div id="menu" onclick="Toggle(settings)">
         <div class="bar1"></div>
         <div class="bar2"></div>
@@ -312,8 +289,6 @@
     <script>
         (function () {
 
-            loadTime(document.getElementById("time"));
-
             settings = new Slider(document.getElementById("settings"));
             schedule = new Slider(document.getElementById("schedule"));
 
@@ -322,7 +297,7 @@
                 schedule.attachSwipeHandlers();
                 settings.attachSwipeHandlers();
                 pages.attachSwipeHandlers();
-                
+
             });
         })();
     </script>
