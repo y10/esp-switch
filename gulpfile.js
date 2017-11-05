@@ -48,16 +48,6 @@ gulp.task('clean', function() {
 });
  
 
-/* Copy static files */
-gulp.task('files', function() {
-    return gulp.src([
-            'html/**/*.{jpg,jpeg,png,ico,gif}',
-            'html/fsversion'
-        ])
-        .pipe(gulp.dest('data/'));
-});
- 
-
 gulp.task('gzip', function() {
     return gulp.src('html/**/*.*')
         .pipe(gzip())
@@ -74,7 +64,7 @@ gulp.task("favicons", function () {
     .pipe(gulp.dest("data/favicons"));
 });
 
-gulp.task('buildfs_inline', ['clean'], function() {
+gulp.task('buildfs_inline', ['clean', 'gzip'], function() {
     return gulp.src('html/*.html')
         .pipe(favicon())
         .pipe(inline({
@@ -93,7 +83,7 @@ gulp.task('buildfs_inline', ['clean'], function() {
         .pipe(gulp.dest('data'));
 })
 
-gulp.task('buildfs_embeded', ['buildfs_inline', 'gzip'], function() {
+gulp.task('buildfs_embeded', ['buildfs_inline'], function() {
     
     return gulp.src('data/**/*.*')
     .pipe(foreach(function(stream, file){
