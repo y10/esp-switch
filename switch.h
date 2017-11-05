@@ -83,6 +83,11 @@ public:
            "\r\n}";
   }
 
+  bool isOn()
+  {
+    return startTime ? true : false;
+  }
+
   void turnOn(ScheduleClass &skd)
   {
     turnOn(skd.getDuration());

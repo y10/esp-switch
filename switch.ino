@@ -158,10 +158,17 @@ void setupAlexa()
     Serial.println(relay_name);
   }
 
-  fauxmo.onMessage([](unsigned char device_id, const char *device_name, bool state) {
-    Serial.printf("[MAIN] Device #%d (%s) state: %s\n", device_id, device_name, state ? "ON" : "OFF");
+  fauxmo.onSet([](unsigned char device_id, const char *device_name, bool state) {
+    Serial.printf("[MAIN] Set Device #%d (%s) state: %s\n", device_id, device_name, state ? "ON" : "OFF");
     state ? Switch.turnOn() : Switch.turnOff();
   });
+
+  fauxmo.onGet([](unsigned char device_id, const char *device_name) {
+    bool state = Switch.isOn();
+    Serial.printf("[MAIN] Get Device #%d (%s) state: %s\n", device_id, device_name, state ? "ON" : "OFF");
+    return state;
+  });
+
 }
 
 void setupTime()
