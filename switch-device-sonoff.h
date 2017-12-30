@@ -1,41 +1,55 @@
 #ifndef SWITCH_SONOFF_DEVICE_H
 #define SWITCH_SONOFF_DEVICE_H
 
-#define RELAY 12
-#define LED 13
-#define RST 2
+#define RESET_PIN 2
+#define RELAY_PIN 12
+#define LED1_PIN 13
+#define GPIO_PIN 14
 
+#include "switch.h"
 #include "switch-device.h"
 
 class SonoffSwitch : public SwitchDevice
 {
+private:
+    unsigned long lastTimeChange = 0;
+
   public:
-
     SonoffSwitch()
-      : SwitchDevice(RELAY, LED, RST)
-    {}
-
-    virtual void setup(SwitchClass &api) override
+        : SwitchDevice(RELAY_PIN, LED1_PIN, RESET_PIN)
     {
-      SwitchDevice::setup(api);
-      
-      // turn lights off
-      digitalWrite(LED, HIGH);
     }
 
     virtual void turnOn() override
     {
-      digitalWrite(LED, LOW);
-      digitalWrite(RELAY, HIGH);
+        lastTimeChange = millis();
+
+        SwitchDevice::turnOn();
     }
 
     virtual void turnOff() override
     {
-      digitalWrite(LED, HIGH);
-      digitalWrite(RELAY, LOW);
+        lastTimeChange = millis();
+
+        SwitchDevice::turnOff();
+    }
+
+    void toggle()
+    {
+        if ((millis() - lastTimeChange) > 50)
+        {
+            if (Switch.isOn())
+            {
+                Switch.turnOff();
+            }
+            else
+            {
+                Switch.turnOn();
+            }
+        }
     }
 };
 
-extern SwitchDevice Device = (SwitchDevice)SonoffSwitch();
+extern SonoffSwitch Device = SonoffSwitch();
 
 #endif

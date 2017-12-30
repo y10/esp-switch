@@ -10,7 +10,7 @@
 #include "switch.h"
 #include "switch-time.h"
 #include "switch-settings.h"
-#include "switch-device-edragon.h"
+#include "switch-device-sonoff.h"
 #include "switch-http.h"
 #include "switch-ws.h"
 
@@ -28,6 +28,7 @@ Ticker ticker;
 bool shouldSaveConfig = false;
 
 /*************************** Sketch Code ************************************/
+
 
 void setup()
 {
@@ -52,8 +53,9 @@ void setup()
   setupAlexa();
   setupHttp();
   setupTime();
-
+  
   ticker.detach();
+  Device.turnOff();
 
   Serial.println("[MAIN] System started.");
 }
@@ -67,7 +69,34 @@ void loop()
 
 void setupDevice()
 {
-  Device.setup(Switch);
+  pinMode(LED1_PIN, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);
+
+  pinMode(RESET_PIN, INPUT_PULLUP);
+
+  attachInterrupt(digitalPinToInterrupt(RESET_PIN), []() {
+    Device.restart();
+  }, CHANGE);
+
+  #ifdef GPIO_PIN
+  pinMode(GPIO_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(GPIO_PIN), []() {
+    Device.toggle();
+  }, CHANGE);
+  #endif
+
+  Switch.onTurnOn([&]() {
+    Device.turnOn();
+  });
+  Switch.onTurnOff([&]() {
+    Device.turnOff();
+  });
+  Switch.onRestart([&]() {
+    Device.restart();
+  });
+  Switch.onReset([&]() {
+    Device.reset();
+  });
 }
 
 void setupSPIFFS()
@@ -192,8 +221,8 @@ void setupHttp()
 void tick()
 {
   //toggle state
-  int state = digitalRead(LED); // get the current state of GPIO pin
-  digitalWrite(LED, !state);    // set pin to the opposite state
+  int state = digitalRead(LED1_PIN); // get the current state of GPIO pin
+  digitalWrite(LED1_PIN, !state);    // set pin to the opposite state
 }
 
 //callback notifying us of the need to save config

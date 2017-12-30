@@ -5,13 +5,7 @@
 
 void resetDevice()
 {
-  Serial.println("[MAIN] Factory reset requested.");
   
-  WiFi.disconnect(true);
-  SPIFFS.format();
-  system_restart();
-
-  delay(5000);
 }
   
 class SwitchDevice
@@ -29,51 +23,31 @@ class SwitchDevice
     
     virtual void turnOn() 
     {
+      digitalWrite(_LED, LOW);
       digitalWrite(_RELAY, HIGH);
     }
 
     virtual void turnOff() 
     {
+      digitalWrite(_LED, HIGH);
       digitalWrite(_RELAY, LOW);
     }
 
     virtual void reset()
     {
-      resetDevice();
+      Serial.println("[MAIN] Factory reset requested.");
+      
+      WiFi.disconnect(true);
+      SPIFFS.format();
+      system_restart();
+    
+      delay(5000);
     }
 
     virtual void restart()
     {
       Serial.println("[MAIN] Restarting...");
       system_restart();
-    }
-    
-    virtual void setup(SwitchClass &api)
-    {
-      //set led pin as output
-      pinMode(_LED, OUTPUT);
-
-      //attach reset handler
-      pinMode(_RST, INPUT_PULLUP);
-      attachInterrupt(digitalPinToInterrupt(_RST), resetDevice, CHANGE);
-
-      // set relay as outputs
-      pinMode(_RELAY, OUTPUT);
-
-      api.onTurnOn([&]() {
-        turnOn();
-      });
-      api.onTurnOff([&]() {
-        turnOff();
-      });
-      api.onRestart([&]() {
-        restart();
-      });
-      api.onReset([&]() {
-        reset();
-      });
-
-      //resetDevice();
     }
 };
 
