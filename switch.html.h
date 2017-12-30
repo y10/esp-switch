@@ -3,4 +3,6 @@
 
 #include "data/index.html.gz.h"
 
+//const uint8_t SWITCH_INDEX_HTML_GZ[] PROGMEM = {};
+
 #endif
