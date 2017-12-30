@@ -40,6 +40,7 @@ const favicon = require('gulp-base64-favicon');
 const favicons = require("gulp-favicons");
 const gutil = require('gulp-util');
 const foreach = require('gulp-flatmap');
+const htmlreplace = require('gulp-html-replace');
 
  
 /* Clean destination folder */
