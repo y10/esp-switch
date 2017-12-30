@@ -16,6 +16,13 @@
     <link rel="stylesheet" type="text/css" href="./css/slider.css">
     <link rel="stylesheet" type="text/css" href="./css/switch.css">
     <style>
+        html,
+        body {
+            padding: 0px;
+            margin: 0px;
+            border: 0px;
+        }
+
         body::-webkit-scrollbar {
             display: none;
             background: black;
@@ -129,6 +136,21 @@
             -webkit-transition: all 0.66s ease;
             font-size: 3em !important;
             border: solid 1px transparent;
+        }
+
+        #version {
+
+            line-height: 0;
+            display: inline-block;
+            position: fixed;
+            z-index: 10;
+            bottom: 20px;
+            right: 15px;
+            cursor: default;
+            color: #70C041;
+            opacity: 0.5;
+            transition: all 0.66s ease;
+            -webkit-transition: all 0.66s ease;
         }
 
         #menu {
@@ -283,6 +305,8 @@
         <div class="bar2"></div>
         <div class="bar3"></div>
     </div>
+
+    <div id="version">v1.5</div>
 
     <script>
         (function () {
