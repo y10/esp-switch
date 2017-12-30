@@ -98,16 +98,16 @@ public:
     if (duration)
       countdown.once_ms(duration * 60 * 1000, turnOffSwitch);
 
-    onAction();
     startTime = millis();
+    onAction();
     notify();
   }
 
   void turnOff()
   {
-    offAction();
     startTime = 0;
     countdown.detach();
+    offAction();
     notify();
   }
 
