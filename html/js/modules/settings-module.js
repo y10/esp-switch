@@ -70,7 +70,7 @@ app.modules.settings = (function (loader, http, wss, DOM) {
                 if (!select.disabled) {
                     select.disabled = true;
 
-                    http.get("/api/settings?h=" + select.getValue(), function (state) {
+                    http.get("/api/settings?h=" + select.getText(), function (state) {
                         select.render(state);
                         select.disabled = false;
                     });
@@ -110,7 +110,7 @@ app.modules.settings = (function (loader, http, wss, DOM) {
                 if (!select.disabled) {
                     select.disabled = true;
 
-                    http.get("/api/settings?m=" + select.getValue(), function (state) {
+                    http.get("/api/settings?m=" + select.getText(), function (state) {
                         select.render(state);
                         select.disabled = false;
                     });
