@@ -36,7 +36,7 @@ private:
 
     void toggle()
     {
-        if ((millis() - lastTimeChange) > 50)
+        if ((millis() - lastTimeChange) > 500)
         {
             if (Switch.isOn())
             {
