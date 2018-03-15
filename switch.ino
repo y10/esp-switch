@@ -12,16 +12,15 @@
 #include "switch-settings.h"
 #include "switch-device-sonoff.h"
 #include "switch-http.h"
-#include "switch-ws.h"
 
 /************ Global State ******************/
 DNSServer dns;
 AsyncWebServer httpServer(80);
+AsyncEventSource webEvents("/events");
 AsyncWebSocket webSocket("/ws");
 AsyncWiFiManager wifiManager(&httpServer, &dns);
 fauxmoESP fauxmo;
 SwitchHttp httpApi;
-SwitchWs wsApi;
 Ticker ticker;
 
 //flag for saving data
@@ -96,6 +95,10 @@ void setupDevice()
   });
   Switch.onReset([&]() {
     Device.reset();
+  });
+  Switch.onChange([&](){
+      String state = Switch.toJSON();
+      webSocket.textAll(state);
   });
 }
 
@@ -213,8 +216,8 @@ void setupHttp()
   // Setup Web UI
   Serial.println("[MAIN] Setup http server.");
   httpApi.setup(httpServer);
-  wsApi.setup(webSocket);
   httpServer.addHandler(&webSocket);
+  httpServer.addHandler(&webEvents);
   httpServer.begin();
 }
 

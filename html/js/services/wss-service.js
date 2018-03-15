@@ -4,15 +4,18 @@ Wss = (function () {
 
     var onError = [];
 
-    var websock = null;
+    var socket = null;
+
+    var source = null;
 
     var enabled = false;
 
     try {
-        websock = new WebSocket('ws://' + window.location.hostname + ':80/ws');
-        websock.onopen = function (evt) { console.log('WS: open'); };
-        websock.onclose = function (evt) { console.log('WS: close'); };
-        websock.onerror = function (evt) {
+
+        socket = new WebSocket('ws://' + window.location.hostname + ':80/ws');
+        socket.onopen = function (evt) { console.log('WS: open'); };
+        socket.onclose = function (evt) { console.log('WS: close'); };
+        socket.onerror = function (evt) {
             console.log("WS: error");
             console.log(evt);
             if(enabled)
@@ -22,7 +25,7 @@ Wss = (function () {
                 }, this);
             }
         };
-        websock.onmessage = function (evt) {
+        socket.onmessage = function (evt) {
             console.log(evt);
             if(enabled)
             {
@@ -40,36 +43,49 @@ Wss = (function () {
         console.log(error);
     }
 
+    try {
+        source = new EventSource('/events');
+        source.addEventListener('open', function (evt) {
+            console.log("WS: Events Connected");
+        }, false);
+        source.addEventListener('log', function (evt) 
+        {
+            console.log(evt.data);
+
+        }, false);
+        source.addEventListener('error', function (evt) {
+            if (e.target.readyState != EventSource.OPEN) {
+                console.log("WS: Events Disconnected");
+            }
+        }, false);
+
+    } 
+    catch (error) 
+    {
+        console.log(error);
+    }
+
     return {
 
         on: function (onSuccessCallback, onErrorCallback) {
 
-            if (onSuccessCallback) {
-                onSuccess.push(onSuccessCallback);
-            }
-
-            if (onErrorCallback) {
-                onError.push(onErrorCallback);
-            }
-        },
-
-        enable: function()
-        {
-            if(websock)
+            if(socket)
             {
                 enabled = true;
 
-                return true;
-            }
+                if (onSuccessCallback) {
+                    onSuccess.push(onSuccessCallback);
+                }
 
-            return false;
+                if (onErrorCallback) {
+                    onError.push(onErrorCallback);
+                }
+            }
         },
 
-        disable: function()
+        off: function()
         {
             enabled = false;
-
-            return true;
         }
     }
 })();
