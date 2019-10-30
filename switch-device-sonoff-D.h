@@ -1,16 +1,14 @@
 #ifndef SWITCH_SONOFF_DEVICE_H
 #define SWITCH_SONOFF_DEVICE_H
 
-#define ALEXA
-//#define DEVICE_TYPE "controllee"
-#define DEVICE_TYPE "lightswitch"
-#define ACTION_TYPE "SWITCH"
+//#define ALEXA
 
 // Generic ESP8266
-#define RESET_PIN 0
+//#define RESET_PIN 0
 #define RELAY_PIN 12
 #define LED1_PIN 13
-#define GPIO_PIN 14
+//#define GPIO_PIN 14
+#define GPIO_PIN 0
 
 #include "switch-device.h"
 
