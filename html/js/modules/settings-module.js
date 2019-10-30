@@ -13,7 +13,7 @@ app.modules.settings = (function (loader, http, wss, DOM) {
                     input.defaultValue = result.name;
                 }
             }
-        }
+        };
 
         input.onchange = function (e) {
 
@@ -29,7 +29,45 @@ app.modules.settings = (function (loader, http, wss, DOM) {
             }
 
             input.value = input.defaultValue;
-        }
+        };
+
+        var outerDiv = document.createElement("div");
+        outerDiv.appendChild(input);
+        element.appendChild(outerDiv);
+
+        return [input];
+    }
+
+    function createMasterDeviceInput(element) {
+
+        var input = document.createElement("input");
+        input.id = "master-device";
+        input.type = "text";
+        input.placeholder = "device addr";
+        input.render = function (result) {
+            if (result) {
+                if (typeof result.addr !== "undefined") {
+                    input.value = result.addr;
+                    input.defaultValue = result.addr;
+                }
+            }
+        };
+
+        input.onchange = function (e) {
+
+            if (confirm("Rrestarting the device. Are you sure you want to continue?")) {
+                input.disabled = true;
+
+                http.get('/api/settings?p=' + input.value, function (result) {
+                    input.render(result);
+                    input.disabled = false;
+                });
+
+                return;
+            }
+
+            input.value = input.defaultValue;
+        };
 
         var outerDiv = document.createElement("div");
         outerDiv.appendChild(input);
@@ -64,7 +102,7 @@ app.modules.settings = (function (loader, http, wss, DOM) {
                 }
 
                 select.disabled = false;
-            }
+            };
 
             select.onchange = function (e) {
                 if (!select.disabled) {
@@ -75,7 +113,7 @@ app.modules.settings = (function (loader, http, wss, DOM) {
                         select.disabled = false;
                     });
                 }
-            }
+            };
 
             return select;
         }
@@ -104,7 +142,7 @@ app.modules.settings = (function (loader, http, wss, DOM) {
                 }
 
                 select.disabled = false;
-            }
+            };
 
             select.onchange = function (e) {
                 if (!select.disabled) {
@@ -115,7 +153,7 @@ app.modules.settings = (function (loader, http, wss, DOM) {
                         select.disabled = false;
                     });
                 }
-            }
+            };
 
             return select;
         }
@@ -130,6 +168,6 @@ app.modules.settings = (function (loader, http, wss, DOM) {
         return [hours, minutes];
     }
 
-    return { load: function (el) { loader.create('/api/settings', el, [createDeviceNameInput, createTimeControl]) } };
+    return { load: function (el) { loader.create('/api/settings', el, [createDeviceNameInput, createMasterDeviceInput, createTimeControl]); } };
 
 })(app.modules, Http, Wss, app.DOM);

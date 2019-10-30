@@ -2,7 +2,7 @@
 #define SWITCH_ICON_H
 
 #include "data/icon.png.gz.h"
-#include "data/apple-touch-icon.png.gz.h"
+
 
 //const uint8_t SWITCH_ICON_PNG_GZ[] PROGMEM = {};
 //const uint8_t SWITCH_APPLE_TOUCH_ICON_PNG_GZ[] PROGMEM = {};

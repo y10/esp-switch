@@ -34,12 +34,9 @@ private:
 
   void respondManifestRequest(AsyncWebServerRequest *request)
   {
-    const char *device_name = Settings.getDeviceName();
-
     String response = "{ "
                       "\"short_name\": \"Switch\","
-                      "\"name\": \"" +
-                      (String)device_name +
+                      "\"name\": \"" + Settings.dispname() +
                       "\","
                       "\"icons\": ["
                       "  {"
@@ -70,6 +67,13 @@ private:
   void respondTurnOffRequest(AsyncWebServerRequest *request)
   {
     Switch.turnOff();
+
+    respondStateRequest(request);
+  }
+
+  void respondToggleRequest(AsyncWebServerRequest *request)
+  {
+    Switch.toggle();
 
     respondStateRequest(request);
   }
@@ -123,9 +127,22 @@ private:
 
   void respondSettingsRequest(AsyncWebServerRequest *request)
   {
+    bool save = false;
+
     if (request->hasArg("n"))
     {
-      Switch.rename(request->arg("n"));
+      if (Settings.dispname(request->arg("n").c_str()))
+      {
+        save = true;
+      }
+    }
+    
+    if (request->hasArg("p"))
+    {
+      if(Settings.pairaddr(request->arg("p").c_str()))
+      {
+        save = true;
+      }
     }
 
     if (request->hasArg("h"))
@@ -139,6 +156,12 @@ private:
     }
 
     request->send(200, "application/json", Settings.toJSON());
+
+    if(save)
+    {
+      Settings.save();
+      Switch.restart();
+    }
   }
 
   void respond404Request(AsyncWebServerRequest *request)
@@ -213,7 +236,7 @@ public:
       respondCachedRequest(request, "image/png", SWITCH_ICON_PNG_GZ, sizeof(SWITCH_ICON_PNG_GZ));
     });
     server.on("/apple-touch-icon.png", HTTP_GET, [&](AsyncWebServerRequest *request) {
-      respondCachedRequest(request, "image/png", SWITCH_APPLE_TOUCH_ICON_PNG_GZ, sizeof(SWITCH_APPLE_TOUCH_ICON_PNG_GZ));
+      respondCachedRequest(request, "image/png", SWITCH_ICON_PNG_GZ, sizeof(SWITCH_ICON_PNG_GZ));
     });
 
     server.on("/manifest.json", HTTP_GET, [&](AsyncWebServerRequest *request) {
@@ -230,10 +253,51 @@ public:
     server.on("/api/state", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondStateRequest(request);
     });
+    server.on("/api/state", HTTP_POST, [&](AsyncWebServerRequest *request) {
+      respondStateRequest(request);
+    }, NULL, [&](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+      
+      DynamicJsonBuffer jsonBuffer;
+      JsonObject &json = jsonBuffer.parseObject(data, len);
+      if (json.success())
+      {
+        if(json.containsKey("on"))
+        {
+          String result((const char*) (json["on"] | "false"));
+          if (result == "true")
+          {
+            Switch.turnOn();
+          }
+          else if(result == "1")
+          {
+            Switch.turnOn();
+          }
+          else
+          {
+            Switch.turnOff();
+          }
+        }
+      }
+
+    });
+
     server.on("/api/on", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondTurnOnRequest(request);
     });
     server.on("/api/off", HTTP_GET, [&](AsyncWebServerRequest *request) {
+      respondTurnOffRequest(request);
+    });
+    server.on("/api/toggle", HTTP_GET, [&](AsyncWebServerRequest *request) {
+      respondToggleRequest(request);
+    });
+
+    server.on("/digital/1", HTTP_GET, [&](AsyncWebServerRequest *request) {
+         respondStateRequest(request);
+    });
+    server.on("/digital/1/1", HTTP_GET, [&](AsyncWebServerRequest *request) {
+      respondTurnOnRequest(request);
+    });
+    server.on("/digital/1/0", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondTurnOffRequest(request);
     });
 

@@ -9,6 +9,8 @@
 #include "schedule.h"
 #include "switch-settings.h"
 
+#define WEB_LOG(message) Switch.log(message)
+
 void turnOffSwitch();
 void turnOnEveryday();
 void turnOnMonday();
@@ -30,10 +32,13 @@ private:
   Delegate offAction;
   Delegate resetAction;
   Delegate restartAction;
+  Delegate toggleAction;
 
   Ticker countdown;
 
-  unsigned long startTime;
+  unsigned long startTime = 0;
+
+  AsyncEventSource* webEvents;
 
   void notify()
   {
@@ -63,6 +68,11 @@ public:
     offAction = callback;
   }
 
+  void onToggle(Delegate callback)
+  {
+    toggleAction = callback;
+  }
+
   void onRestart(Delegate callback)
   {
     restartAction = callback;
@@ -71,6 +81,21 @@ public:
   void onReset(Delegate callback)
   {
     resetAction = callback;
+  }
+
+  void setupLog(AsyncEventSource* source)
+  {
+    webEvents = source;
+  }
+
+  void log(String message)
+  {
+    if (webEvents) 
+    {
+      webEvents->send(message.c_str(), "log");
+    }
+
+    Serial.println(message);
   }
 
   String toJSON()
@@ -111,7 +136,12 @@ public:
     notify();
   }
 
-  void restart()
+  void toggle()
+  {
+    toggleAction();
+  }
+
+  void ICACHE_RAM_ATTR restart()
   {
     restartAction();
   }
@@ -119,15 +149,6 @@ public:
   void reset()
   {
     resetAction();
-  }
-
-  void rename(const String &value)
-  {
-    if (Settings.setDeviceName(value.c_str()))
-    {
-      Settings.save();
-      restart();
-    }
   }
 
   void schedule(timeDayOfWeek_t day, int hours, int minutes, int duration, int enable)
