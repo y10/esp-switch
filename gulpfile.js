@@ -81,7 +81,7 @@ gulp.task('gzip', function() {
 
 gulp.task('html', function() {
     return gulp.src('html/*.html')
-        //.pipe(favicon())
+        .pipe(favicon())
         .pipe(inline({
             base: 'html/',
             js: [],
@@ -94,7 +94,7 @@ gulp.task('html', function() {
             minifyCSS: true,
             minifyJS: true
         }))
-        .pipe(gzip())
+        //.pipe(gzip())
         .pipe(gulp.dest('data'))
 })
 
