@@ -20,13 +20,13 @@ private:
 public:
   SwitchSettings()
   {
-    host_name = "Switch-" + String(ESP.getChipId(), HEX);
+    disp_name = "Switch";
+    safe_name = "switch";
+    host_name = "switch-" + String(ESP.getChipId(), HEX);
     mqtt_host = "mqqt";
     mqtt_port = 1883;
     mqtt_user = "homeassistant";
     mqtt_pwrd = "123456";
-    disp_name = "Switch";
-    safe_name = "switch";
   }
 
   const String hostname() const {
