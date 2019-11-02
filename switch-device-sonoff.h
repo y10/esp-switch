@@ -4,7 +4,6 @@
 #define ALEXA
 //#define DEVICE_TYPE "controllee"
 #define DEVICE_TYPE "lightswitch"
-#define ACTION_TYPE "SWITCH"
 
 // Generic ESP8266
 #define RESET_PIN 0
