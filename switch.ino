@@ -12,9 +12,10 @@
 #include <fauxmoESP.h>
 #include <Ticker.h>
 #include "switch.h"
-#include "switch-time.h"
+#include "switch-log.h"
 #include "switch-settings.h"
 #include "switch-device-sonoff.h"
+#include "switch-time.h"
 #include "switch-http.h"
 
 /************ Global State ******************/
@@ -39,26 +40,24 @@ void setupDevice();
 void setup()
 {
   Serial.begin(115200);
-  Serial.print("[MAIN] Reset reason: ");
-  WEB_LOG(ESP.getResetReason());
+  Log.print("[MAIN] Reset reason: ");
+  Log.println(ESP.getResetReason());
+
 
   setupSwitch();
-  setupHttp();
   setupDevice();
 
   ticker.attach(0.6, tick);
   setupWifi();
   setupOTA();
-
-#ifdef ALEXA
+  setupLog();  
+  setupHttp();
   setupAlexa();
-#endif
-
   setupMQTT();
   setupTime();
   ticker.detach();
 
-  WEB_LOG("[MAIN] System started.");
+  Log.println("[MAIN] System started.");
 }
 
 void loop()
@@ -70,6 +69,14 @@ void loop()
 #endif
 
   Alarm.delay(0);
+}
+
+void setupLog()
+{
+#ifdef WEBLOG  
+  Serial.println("[MAIN] Setup log");
+  Log.setup(&webEvents);
+#endif  
 }
 
 void setupDevice()
@@ -103,16 +110,10 @@ void setupSwitch()
       String state = Switch.toJSON();
       webSocket.textAll(state);
   });  
-
-  Switch.setupLog(&webEvents);
 }
 
 void setupWifi()
 {
-  // The extra parameters to be configured (can be either global or just in the setup)
-  // After connecting, parameter.getValue() will get you the configured value
-  // id/name placeholder/prompt default length
-
   static AsyncWiFiManagerParameter custom_disp_name("disp_name", "Display Name", Settings.dispname().c_str(), 50);
   wifiManager.addParameter(&custom_disp_name);
 
@@ -134,10 +135,10 @@ void setupWifi()
   //set callback that gets called when connecting to previous WiFi fails, and enters Access Point mode
   wifiManager.setAPCallback([](AsyncWiFiManager *myWiFiManager)
   {
-    WEB_LOG("[MAIN] Entered config mode");
-    WEB_LOG(WiFi.softAPIP().toString());
+    Log.println("[MAIN] Entered config mode");
+    Log.println(WiFi.softAPIP().toString());
     //if you used auto generated SSID, print it
-    WEB_LOG(myWiFiManager->getConfigPortalSSID());
+    Log.println(myWiFiManager->getConfigPortalSSID());
     //entered config mode, make led toggle faster
     ticker.attach(0.2, tick);
   });
@@ -157,27 +158,27 @@ void setupWifi()
 
   if (!wifiManager.autoConnect(Settings.hostname().c_str()))
   {
-    WEB_LOG("[MAIN] failed to connect and hit timeout");
+    Log.println("[MAIN] failed to connect and hit timeout");
     ESP.reset();
   }
 
   //if you get here you have connected to the WiFi
-  WEB_LOG("[MAIN] connected to Wifi");
+  Log.println("[MAIN] connected to Wifi");
 }
 
 void setupOTA()
 {
-  WEB_LOG("[OTA] Setup OTA");
+  Log.println("[OTA] Setup OTA");
   // OTA
   // An important note: make sure that your project setting of Flash size is at least double of size of the compiled program. Otherwise OTA fails on out-of-memory.
   ArduinoOTA.onStart([]() {
-    WEB_LOG("[OTA] OTA: Start");
+    Log.println("[OTA] OTA: Start");
   });
   ArduinoOTA.onEnd([]() {
-    WEB_LOG("[OTA] OTA: End");
+    Log.println("[OTA] OTA: End");
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("OTA progress: %u%%\r", (progress / (total / 100)));
+    Log.printf("OTA progress: %u%%\r", (progress / (total / 100)));
   });
   ArduinoOTA.onError([](ota_error_t error) {
     char errormsg[100];
@@ -192,30 +193,34 @@ void setupOTA()
       strcpy(errormsg + strlen(errormsg), "Receive Failed");
     else if (error == OTA_END_ERROR)
       strcpy(errormsg + strlen(errormsg), "End Failed");
-    WEB_LOG(errormsg);
+    Log.println(errormsg);
   });
   ArduinoOTA.setHostname(Settings.hostname().c_str());
   ArduinoOTA.begin();
 }
 
-#ifdef ALEXA
+
 void setupAlexa()
 {
+#ifndef ALEXA
+  return;
+#endif
+
   if (Settings.pairaddr().length() == 0 && Settings.dispname().length() > 0)
   {
     // Setup Alexa devices
     fauxmo.addDevice(Settings.dispname().c_str(), DEVICE_TYPE);
-    Serial.print("[MAIN] Added alexa device: ");
-    WEB_LOG(Settings.dispname());
+    Log.print("[MAIN] Added alexa device: ");
+    Log.println(Settings.dispname());
 
     fauxmo.onSet([](unsigned char device_id, const char *device_name, bool state) {
-      Serial.printf("[MAIN] Set Device #%d (%s) state: %s\n", device_id, device_name, state ? "ON" : "OFF");
+      Log.printf("[MAIN] Set Device #%d (%s) state: %s\n", device_id, device_name, state ? "ON" : "OFF");
       state ? Switch.turnOn() : Switch.turnOff();
     });
 
     fauxmo.onGet([](unsigned char device_id, const char *device_name) {
       bool state = Switch.isOn();
-      Serial.printf("[MAIN] Get Device #%d (%s) state: %s\n", device_id, device_name, state ? "ON" : "OFF");
+      Log.printf("[MAIN] Get Device #%d (%s) state: %s\n", device_id, device_name, state ? "ON" : "OFF");
       return state;
     });
   }
@@ -224,41 +229,40 @@ void setupAlexa()
     fauxmo.enable(false);
   }
 }
-#endif
 
 void setupMQTT()
 {
-  WEB_LOG("[MQTT] Setup MQTT");
+  Log.println("[MQTT] Setup MQTT");
   
   WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP& event) {
-    WEB_LOG("Connected to Wi-Fi.");
+    Log.println("Connected to Wi-Fi.");
     mqttClient.connect();
   });
 
   WiFi.onStationModeDisconnected([](const WiFiEventStationModeDisconnected& event) {
-    WEB_LOG("Disconnected from Wi-Fi.");
+    Log.println("Disconnected from Wi-Fi.");
     mqttReconnectTimer.detach(); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
   });
 
   mqttClient.onConnect([](bool sessionPresent) {
-    WEB_LOG("Connected to MQTT.\n\r  Session present: " + String(sessionPresent));
+    Log.println("Connected to MQTT.\r\n  Session present: " + String(sessionPresent));
     
     uint16_t packetIdSub = mqttClient.subscribe(String("cmnd/" + (String)Settings.safename() + "/POWER").c_str(), 2);
-    WEB_LOG("Subscribing at QoS 2, packetId: " + String(packetIdSub));
+    Log.println("Subscribing at QoS 2, packetId: " + String(packetIdSub));
     
     uint16_t packetIdPub1 = mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 1, true, String("{\"POWER\": \"" + (String)(Switch.isOn() ? "ON" : "OFF") + "\"}").c_str());
-    WEB_LOG("Publishing at QoS 1, packetId: " + String(packetIdPub1));
+    Log.println("Publishing at QoS 1, packetId: " + String(packetIdPub1));
     
     uint16_t packetIdPub2 = mqttClient.publish(String("tele/" + (String)Settings.safename() + "/LWT").c_str(), 2, true, "Online");
-    WEB_LOG("Publishing at QoS 2, packetId: " + String(packetIdPub2));
+    Log.println("Publishing at QoS 2, packetId: " + String(packetIdPub2));
   });
 
   mqttClient.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
-    WEB_LOG("Disconnected from MQTT.");
+    Log.println("Disconnected from MQTT.");
 
     if (WiFi.isConnected()) {
       mqttReconnectTimer.once(2, [](){
-        WEB_LOG("Connecting to MQTT...");
+        Log.println("Connecting to MQTT...");
         mqttClient.connect();
       });
     }
@@ -271,7 +275,7 @@ void setupMQTT()
       message += (char)payload[i];
     }
 
-    WEB_LOG((String)"Command received." +
+    Log.println((String)"Command received." +
     "\r\n  topic: " + String(topic) +
     "\r\n  message: " + message +
     "\r\n  qos: " + String(properties.qos) +
@@ -290,14 +294,14 @@ void setupMQTT()
 
   Settings.setupMQTT(mqttClient);
 
-  WEB_LOG("Connecting to MQTT...");
+  Log.println("Connecting to MQTT...");
   mqttClient.connect();
 }
 
 void setupTime()
 {
   // sync time
-  WEB_LOG("[MAIN] Setup time synchronization");
+  Log.println("[MAIN] Setup time synchronization");
   setSyncProvider([]() { return NTP.getTime(); });
   setSyncInterval(3600);
 }
@@ -305,7 +309,7 @@ void setupTime()
 void setupHttp()
 {
   // Setup Web UI
-  WEB_LOG("[MAIN] Setup http server.");
+  Log.println("[MAIN] Setup http server.");
   httpApi.setup(httpServer);
   httpServer.addHandler(&webSocket);
   httpServer.addHandler(&webEvents);

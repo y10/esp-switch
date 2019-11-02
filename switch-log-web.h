@@ -1,86 +1,71 @@
 #ifndef SWITCH_LOG_WEB_H
 #define SWITCH_LOG_WEB_H
 
+#define WEBLOG
+
 #include <ESPAsyncWebServer.h>
-#include "switch-log.h"
 
-//static std::vector<String*> lines;
-
-class WebLog : public Stream
+class WebLog : public Print
 {
   private:
     AsyncEventSource * source;
-    std::vector<String*> lines;
-    String line;
+    String log;
 
   public:
     ~WebLog(void)
     {
     }
 
-    int available(void) override
+    virtual size_t write(uint8_t c) override
     {
-       return 0;
+        return write(&c, sizeof(c));
     }
-
-    int peek(void) override
+    
+    virtual size_t write(const uint8_t *data, size_t size) override
     {
-       return 0;
-    }
- 
-    int read(void) override
-    {
-       return 0;
-    }
+        char text[size + 1];
+        strncpy(text, (const char *)data, size);
+        text[size] = 0;
+        buffer(text);
+        flush(); 
 
-    size_t write(uint8_t c) override
-    {
-        return 0;
-    }
-
-    size_t write(const uint8_t *buffer, size_t size) override
-    {
-        if (!source)
-        {
-            String * str = new String();
-        
-            str->reserve(size);
-
-            for(size_t i = 0; i < size; i++)
-            {
-                str->concat(buffer[i]);
-            }
-
-            lines.push_back(str);
-        }
-        
-        return Serial.write(buffer, size);        
-    }
-   
-    void flush()
-    {
-        for (auto line : lines)
-        {
-             source->send(line->c_str(), "log");
-             delete line;
-        }
-
-        lines.clear();
+        return Serial.write(data, size);        
     }
 
     void setup(AsyncEventSource * evs)
     {
+        source = evs;
         evs->onConnect([&](AsyncEventSourceClient * client){
-
-            if(!source)
-            {
-                this->source = evs;
-                this->flush();
-                this->println("[LOG] Connected");
-
-                evs->onConnect(NULL);
-            }
+            Serial.println("[LOG] Connected.");
+            flush();
         });
+    }
+
+    void flush() 
+    {   
+        if(source)
+        {
+            int index = log.indexOf("\r\n");
+            while(index != -1)
+            {
+                String line = log.substring(0, index);
+                log = log.substring(index + 2);
+                index = log.indexOf("\r\n");
+                source->send(line.c_str(), "log");
+            }
+        }
+    }
+
+private:
+    void buffer(const char * text) 
+    {
+        log += text;
+        
+        if (log.length() > 1000)
+        {
+            int index = log.indexOf("\r\n");
+            log = log.substring(index + 2);
+        }
     }
 };
 

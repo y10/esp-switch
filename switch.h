@@ -7,9 +7,6 @@
 #include <vector>
 #include <functional>
 #include "schedule.h"
-#include "switch-settings.h"
-
-#define WEB_LOG(message) Switch.log(message)
 
 void turnOffSwitch();
 void turnOnEveryday();
@@ -37,8 +34,6 @@ private:
   Ticker countdown;
 
   unsigned long startTime = 0;
-
-  AsyncEventSource* webEvents;
 
   void notify()
   {
@@ -81,21 +76,6 @@ public:
   void onReset(Delegate callback)
   {
     resetAction = callback;
-  }
-
-  void setupLog(AsyncEventSource* source)
-  {
-    webEvents = source;
-  }
-
-  void log(String message)
-  {
-    if (webEvents) 
-    {
-      webEvents->send(message.c_str(), "log");
-    }
-
-    Serial.println(message);
   }
 
   String toJSON()
