@@ -4,8 +4,15 @@ Http = (function () {
         get: function (service, onSuccess, onError) {
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
-                if (this.readyState == 4 && this.status == 200) {
-                    onSuccess(JSON.parse(this.responseText));
+                if (this.readyState == 4)
+                {
+                    if (this.status == 200 && typeof onSuccess !== "undefined") {
+                        onSuccess(JSON.parse(this.responseText));
+                    } else if(typeof onError !== "undefined") {
+                        onError(this.response);
+                    } else {
+                        onSuccess(this.response);
+                    }
                 }
             };
             xhttp.open('GET', service, true);
@@ -15,13 +22,20 @@ Http = (function () {
         post: function (service, json, onSuccess, onError) {
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
-                if (this.readyState == 4 && this.status == 200) {
-                    onSuccess(JSON.parse(this.responseText));
+                if (this.readyState == 4)
+                {
+                    if (this.status == 200 && typeof onSuccess !== "undefined") {
+                        onSuccess(JSON.parse(this.responseText));
+                    } else if(typeof onError !== "undefined") {
+                        onError(this.response);
+                    } else {
+                        onSuccess(this.response);
+                    }
                 }
             };
 
-            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhttp.open('POST', service, true);
+            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
             xhttp.send(JSON.stringify(json));
         },
 

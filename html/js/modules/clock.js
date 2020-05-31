@@ -1,28 +1,17 @@
 if (typeof app.modules === "undefined") { app.modules = {} }
 
 app.modules.clock = (function (loader, http, wss, DOM) {
-
-    function createHourSelect() {
-
-        var select = DOM.createSelectFromArray(Array.apply(null, Array(24)).map(function (x, y) { return ("0" + y).slice(-2); }));
-
+    function createSetting(key, options, onrender) {
+    
+        var select = DOM.createSelect(options);
         select.render = function (state) {
             select.disabled = true;
-            select.selectedIndexDefault = 0;
 
-            if (state) {
-                if (typeof state.time !== "undefined") {
-                    var time = state.time;
-                    var timeParts = time.split(":");
-                    if (timeParts.length > 0) {
-                        var hourValue = ("0" + timeParts[0]).slice(-2);
-                        for (var i = 0; i < select.options.length; i++) {
-                            if (select.options[i].innerText === hourValue) {
-                                select.selectedIndex = i;
-                                select.selectedIndexDefault = i
-                                break;
-                            }
-                        }
+            if (state && state.hasOwnProperty(key)) {
+                for (var i = 0; i < select.options.length; i++) {
+                    if (select.options[i].innerText === state[key]) {
+                        select.selectedIndex = i;
+                        break;
                     }
                 }
             }
@@ -30,46 +19,15 @@ app.modules.clock = (function (loader, http, wss, DOM) {
             select.disabled = false;
         };
 
-        select.save = function (settings) {
-            if (select.selectedIndex !== select.selectedIndexDefault){
-                settings.time_hour = select.getText();
-            }
-        };
-
-        return select;
-    }
-
-    function createMinuteSelect() {
-
-        var select = DOM.createSelectFromArray(Array.apply(null, Array(60)).map(function (x, y) { return ("0" + y).slice(-2); }));
-        
-        select.render = function (state) {
-            select.disabled = true;
-            select.selectedIndexDefault = 0
-
-            if (state) {
-                if (typeof state.time !== "undefined") {
-                    var time = state.time;
-                    var timeParts = time.split(":");
-                    if (timeParts.length > 1) {
-                        var minValue = ("0" + timeParts[1]).slice(-2);
-                        for (var i = 0; i < select.options.length; i++) {
-                            if (select.options[i].innerText === minValue) {
-                                select.selectedIndex = i;
-                                select.selectedIndexDefault = i
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            select.disabled = false;
-        };
-
-        select.save = function (settings) {
-            if (select.selectedIndex !== select.selectedIndexDefault){
-                settings.time_min = select.getText();
+        select.onchange = function (e) {
+            if (!select.disabled) {
+                select.disabled = true;
+                var data = {};
+                data[key] = parseInt(select.getText());
+                http.post("/api/settings", data, function (state) {
+                    onrender(state);
+                    select.disabled = false;
+                });
             }
         };
 
@@ -80,20 +38,35 @@ app.modules.clock = (function (loader, http, wss, DOM) {
         load: function (element) { 
             var section = document.createElement('section');
             section.className = "slide-container";
+
+            element.render = function (data) {
+                if (data && data.hasOwnProperty("time")) {
+                    var parts = data["time"].split(":");
+
+                    if (parts.length > 0) {
+                        data.time_hour = ("0" + parts[0]).slice(-2);
+                        hours.render(data);
+                    }
+
+                    if (parts.length > 1) {
+                        data.time_min = ("0" + parts[1]).slice(-2);
+                        minutes.render(data);
+                    } 
+                }           
+            };
             
-            var hours = createHourSelect();
+            var hours = createSetting("time_hour", Array.apply(null, Array(24)).map(function (x, y) { return ("0" + y).slice(-2); }), function(data){
+                element.render(data);
+            });
             section.appendChild(hours);
 
             section.appendChild(DOM.createSpan({ innerText: ":" }));
 
-            var minutes = createMinuteSelect();
+            var minutes = createSetting("time_min", Array.apply(null, Array(60)).map(function (x, y) { return ("0" + y).slice(-2); }), function(data){
+                element.render(data);
+            });
             section.appendChild(minutes);
 
-            element.render = function (data) {
-                hours.render(data);
-                minutes.render(data);
-            };
-    
             element.activate = function () {
                 http.get('/api/settings', function (result) {
                     element.render(result);

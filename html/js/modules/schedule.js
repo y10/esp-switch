@@ -1,3 +1,5 @@
+if (typeof app.modules === "undefined") { app.modules = {} }
+
 app.modules.schedule = (function (http, DOM) {
 
     return {
@@ -47,7 +49,7 @@ app.modules.schedule = (function (http, DOM) {
 
             function createHourSelect() {
 
-                var select = DOM.createSelectFromArray(Array.apply(null, Array(24)).map(function (x, y) { return ("0" + y).slice(-2); }));
+                var select = DOM.createSelect(Array.apply(null, Array(24)).map(function (x, y) { return ("0" + y).slice(-2); }));
 
                 select.render = function (state) {
                     select.disabled = true;
@@ -89,7 +91,7 @@ app.modules.schedule = (function (http, DOM) {
 
             function createMinuteSelect() {
 
-                var select = DOM.createSelectFromArray(Array.apply(null, Array(60)).map(function (x, y) { return ("0" + y).slice(-2); }));
+                var select = DOM.createSelect(Array.apply(null, Array(60)).map(function (x, y) { return ("0" + y).slice(-2); }));
 
                 select.render = function (state) {
                     select.disabled = true;
@@ -134,8 +136,7 @@ app.modules.schedule = (function (http, DOM) {
 
                 function createDurationSelect() {
 
-                    //var select = DOM.createSelectFromArray(Array.apply(null, Array(13)).map(function (x, y) { return ("0" + (y * 5)).slice(-2); }));
-                    var select = DOM.createSelectFromArray(Array.apply(null, Array(46)).map(function (x, y) { return ("0" + y).slice(-2); }));
+                    var select = DOM.createSelect(Array.apply(null, Array(46)).map(function (x, y) { return ("0" + y).slice(-2); }));
 
                     return select;
                 }

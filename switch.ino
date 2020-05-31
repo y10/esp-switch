@@ -1,5 +1,8 @@
 #define ESP8266
 
+//#define NO_UI
+//#define NO_IMAGE
+
 /************ Includes ******************/
 #include <FS.h> //this needs to be first, or it all crashes and burns...
 #include <ESP8266WiFi.h> 
@@ -9,6 +12,7 @@
 #include <ESPAsyncWiFiManager.h> 
 #include <AsyncMqttClient.h>
 #include <ArduinoOTA.h>
+#include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
 #include <fauxmoESP.h>
 #include <Ticker.h>
 #include "switch.h"
@@ -27,14 +31,29 @@ AsyncWiFiManager wifiManager(&httpServer, &dns);
 WiFiEventHandler wifiConnectHandler;
 WiFiEventHandler wifiDisconnectHandler;
 AsyncMqttClient mqttClient;
-Ticker mqttReconnectTimer;
+Ticker mqttLoop;
 #ifdef ALEXA
 fauxmoESP fauxmo;
 #endif
 Ticker ticker;
 SwitchHttp httpApi;
 
-/*************************** Sketch Code ************************************/
+
+void connectMqtt()
+{
+  if (!mqttClient.connected() && WiFi.isConnected()) 
+  {
+    Log.println("Connecting to MQTT...");
+    mqttClient.connect();
+  }
+  else
+  {
+    mqttClient.publish(String("tele/" + (String)Settings.safename() + "/LWT").c_str(), 0, false, "Online");
+  }
+  
+  mqttLoop.once(10, connectMqtt);
+}
+
 void ICACHE_RAM_ATTR tick();
 void setupDevice();
 void setup()
@@ -199,7 +218,6 @@ void setupOTA()
   ArduinoOTA.begin();
 }
 
-
 void setupAlexa()
 {
 #ifndef ALEXA
@@ -234,38 +252,16 @@ void setupMQTT()
 {
   Log.println("[MQTT] Setup MQTT");
   
-  WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP& event) {
-    Log.println("Connected to Wi-Fi.");
-    mqttClient.connect();
-  });
-
-  WiFi.onStationModeDisconnected([](const WiFiEventStationModeDisconnected& event) {
-    Log.println("Disconnected from Wi-Fi.");
-    mqttReconnectTimer.detach(); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
-  });
-
   mqttClient.onConnect([](bool sessionPresent) {
     Log.println("Connected to MQTT.\r\n  Session present: " + String(sessionPresent));
     
-    uint16_t packetIdSub = mqttClient.subscribe(String("cmnd/" + (String)Settings.safename() + "/POWER").c_str(), 2);
-    Log.println("Subscribing at QoS 2, packetId: " + String(packetIdSub));
+    mqttClient.subscribe(String("cmnd/" + (String)Settings.safename() + "/POWER").c_str(), 0);
     
-    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 2, true, String("{\"POWER\": \"" + (String)(Switch.isOn() ? "ON" : "OFF") + "\"}").c_str());
-    
-    mqttClient.publish(String("tele/" + (String)Settings.safename() + "/LWT").c_str(), 0, false, "Online");
-
-    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 2, true, String("{\"POWER\": \"" + (String)(Switch.isOn() ? "ON" : "OFF") + "\"}").c_str());
+    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 0, false, String("{\"POWER\": \"" + (String)(Switch.isOn() ? "ON" : "OFF") + "\"}").c_str());
   });
 
   mqttClient.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
     Log.println("Disconnected from MQTT.");
-
-    if (WiFi.isConnected()) {
-      mqttReconnectTimer.once(2, [](){
-        Log.println("Connecting to MQTT...");
-        mqttClient.connect();
-      });
-    }
   });
 
   mqttClient.onMessage([](char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
@@ -289,14 +285,11 @@ void setupMQTT()
         Switch.turnOff();
       }
     }
-
-    mqttClient.publish(String("tele/" + (String)Settings.safename() + "/LWT").c_str(), 0, false, "Online");
   });
 
-  Settings.setupMQTT(mqttClient);
-
-  Log.println("Connecting to MQTT...");
-  mqttClient.connect();
+  if (Settings.setupMQTT(mqttClient)) {
+    connectMqtt();
+  }
 }
 
 void setupTime()

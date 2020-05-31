@@ -41,8 +41,7 @@ var makeHeader = function(debug) {
 
         var parts = source.path.split(path.sep);
         var filename = parts[parts.length - 1];
-        var safename = filename.split('.').join('_').toUpperCase();
-
+        var safename = filename.split('.').join('_').split('-').join('_').toUpperCase();
         // Generate output
         var output = '';
         output += 'const uint8_t SWITCH_' + safename + '[] PROGMEM = {';

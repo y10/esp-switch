@@ -1,22 +1,26 @@
 if (typeof app === "undefined") { app = {} }
 
-app.DOM = (function () {
+app.DOM = window.DOM = (function () {
 
-    function createSelectFromArray(array) {
-
-        var select = createSelect();
-
-        for (var index = 0; index < array.length; index++) {
-            var option = document.createElement('option');
-            option.innerText = array[index];
-            select.appendChild(option);
-        }
-
-        return select;
+    function geid(id) {
+        return document.getElementById(id);
     }
 
-    function createSelect() {
-        var select = document.createElement('select');
+    function ce(tag) {
+        return document.createElement(tag);
+    }
+
+    function csl(array) {
+        var select = ce('select');
+
+        if (array)
+        {
+            for (var index = 0; index < array.length; index++) {
+                var option = ce('option');
+                option.innerText = array[index];
+                select.appendChild(option);
+            }
+        }
 
         select.getText = function () {
             var selectedIndex = select.selectedIndex;
@@ -55,7 +59,7 @@ app.DOM = (function () {
         }
 
         select.addOption = function (text, value) {
-            var option = document.createElement('option');
+            var option = ce('option');
             option.text = text;
             if (value)
             {
@@ -67,8 +71,8 @@ app.DOM = (function () {
         return select;
     }
 
-    function createSpan(html) {
-        var span = document.createElement('span');
+    function csp(html) {
+        var span = ce('span');
         for (var key in html) {
             if (html.hasOwnProperty(key)) {
                 span[key] = html[key];
@@ -78,8 +82,9 @@ app.DOM = (function () {
     }
 
     return {
-        createSelectFromArray: createSelectFromArray,
-        createSelect: createSelect,
-        createSpan: createSpan
+        createElement: ce, ce: ce,
+        createSelect: csl, csl: csl,
+        createSpan: csp, csp: csp,
+        geid: geid,
     };
 })();

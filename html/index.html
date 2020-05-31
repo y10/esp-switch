@@ -3,7 +3,8 @@
 <head>
     <title>Switch</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-title" content="Switch">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -11,8 +12,8 @@
     <!-- shortcut::html\icon.png -->
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" sizes="180x180" href="./icon.png">
-    <link rel="apple-touch-icon" href="./icon.png">
-    <link rel="apple-touch-startup-image" href="./icon.png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <link rel="apple-touch-startup-image" href="./apple-touch-icon.png">
     <link rel="stylesheet" type="text/css" href="./css/slider.css">
     <link rel="stylesheet" type="text/css" href="./css/switch.css">
     <style>
@@ -33,7 +34,8 @@
         section,
         select,
         textarea,
-        input[type=text] {
+        input[type=text],
+        input[type=password] {
             background-color: transparen;
             background: transparent;
             color: #70C041;
@@ -52,7 +54,8 @@
         }
 
         button,
-        input[type=text] {
+        input[type=text],
+        input[type=password] {
             -webkit-transition: all 0.30s ease-in-out;
             -moz-transition: all 0.30s ease-in-out;
             -ms-transition: all 0.30s ease-in-out;
@@ -86,6 +89,14 @@
             color: rgba(112, 192, 65, 0.3)
         }
 
+        hr {
+            max-width: 80vw;
+            width: 100%;
+            line-height: 1em;
+            font-size: 3em !important;
+            border-color: rgba(112, 192, 65, 0.3)
+        }
+
         button {
             border: none 0px;
             cursor: pointer;
@@ -101,13 +112,20 @@
             opacity: 1;
         }
 
-        input[type=text]:focus {
+        button:focus,
+        input[type=text]:focus,
+        input[type=password]:focus {
             border: solid 1px #70C041;
         }
 
+        button:active,
         input[type=text]:active,
+        input[type=password],
         textarea:active,
+
+        button:focus,
         input[type=text]:focus,
+        input[type=password]:focus,
         textarea:focus {
             opacity: 1;
         }
@@ -118,7 +136,9 @@
 
 
         section span,
+        section button,
         section input[type='text'],
+        section input[type='password'],
         section select {
             background: transparent;
             font-size: 3em !important;
@@ -128,7 +148,9 @@
             background: black;
         }
 
-        section input[type='text'] {
+        section button,
+        section input[type='text'],
+        section input[type='password'] {
             max-width: 80vw;
             width: 100%;
             line-height: 1em;
@@ -136,6 +158,123 @@
             -webkit-transition: all 0.66s ease;
             font-size: 3em !important;
             border: solid 1px transparent;
+        }
+
+        section button  {
+            color: rgba(112, 192, 65, 0.3);
+            border: solid 1px rgba(112, 192, 65, 0.3);
+        }
+
+
+        /* Progress Bar */
+        #progress {
+            position: absolute;
+            z-index: 1000;
+            height: 4px;
+            display: block;
+            width: 100%;
+            background-color: #70C041;
+            background-clip: padding-box;
+            overflow: hidden;
+            display: none;
+        }
+
+        #progress .indeterminate {
+            background-color: #26a69a;
+        }
+
+        #progress .indeterminate:before {
+            content: '';
+            position: absolute;
+            background-color: inherit;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            will-change: left, right;
+            -webkit-animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+            animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+        }
+
+        #progress .indeterminate:after {
+            content: '';
+            position: absolute;
+            background-color: inherit;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            will-change: left, right;
+            -webkit-animation: indeterminate-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+            animation: indeterminate-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+            -webkit-animation-delay: 1.15s;
+            animation-delay: 1.15s;
+        }
+
+        @-webkit-keyframes indeterminate {
+            0% {
+                left: -35%;
+                right: 100%;
+            }
+
+            60% {
+                left: 100%;
+                right: -90%;
+            }
+
+            100% {
+                left: 100%;
+                right: -90%;
+            }
+        }
+
+        @keyframes indeterminate {
+            0% {
+                left: -35%;
+                right: 100%;
+            }
+
+            60% {
+                left: 100%;
+                right: -90%;
+            }
+
+            100% {
+                left: 100%;
+                right: -90%;
+            }
+        }
+
+        @-webkit-keyframes indeterminate-short {
+            0% {
+                left: -200%;
+                right: 100%;
+            }
+
+            60% {
+                left: 107%;
+                right: -8%;
+            }
+
+            100% {
+                left: 107%;
+                right: -8%;
+            }
+        }
+
+        @keyframes indeterminate-short {
+            0% {
+                left: -200%;
+                right: 100%;
+            }
+
+            60% {
+                left: 107%;
+                right: -8%;
+            }
+
+            100% {
+                left: 107%;
+                right: -8%;
+            }
         }
 
         #version {
@@ -202,17 +341,19 @@
             transform: rotate(45deg) translate(-8px, -8px);
         }
     </style>
-    <script src="./js/app.js"></script> 
+    <script src="./js/app.js"></script>
     <script src="./js/slider.js"></script>
-    <script src="./js/http.mock.js"></script>
+    <script src="./js/http.js"></script>
     <script src="./js/wss.js"></script>
     <script src="./js/modules/switch.js"></script>
+    <script src="./js/modules/menu.js"></script>
+    <script src="./js/modules/info.js"></script>
     <script src="./js/modules/schedule.js"></script>
-    <script src="./js/modules/settings.js"></script>
+    <script src="./js/modules/clock.js"></script>
     <script>
         function Toggle(slides) {
 
-            var menu = document.getElementById("menu");
+            var menu = DOM.geid("menu");
             if (menu) {
                 if (menu.classList.contains('settings')) {
                     menu.classList.remove('settings');
@@ -228,12 +369,37 @@
             }
         }
 
-        function loadSettings(el) {
-            app.modules.settings.load(el);
+        function Update(settings) {
+
+            var url = prompt("Are you sure you want to update from?", settings['upds_addr'] || "http://ota.voights.net/switch.bin");
+            if (url != null) {
+                Http.post("/update", { "upds_addr": url }, function (response) {
+                    Reload(30000);
+                });
+            }
+        }
+
+        function Reload(delay) {
+            DOM.geid("progress").style.display = "block";
+            setTimeout(function () {
+                window.location.reload();
+            }, delay);
+        }
+
+        function loadMenu(el) {
+            app.modules.menu.load(el);
+        }
+
+        function loadInfo(el) {
+            app.modules.info.load(el);
         }
 
         function loadSwitch(el) {
             app.modules.main.load(el);
+        }
+
+        function loadClock(el) {
+            app.modules.clock.load(el);
         }
 
         function loadSchedule(el, day, caption) {
@@ -244,12 +410,18 @@
 </head>
 
 <body>
+    <div id="progress">
+        <div class="indeterminate"></div>
+    </div>
 
     <div id="settings" class="slide-window" style="display:none">
 
         <ol class="slides">
-            <li class="slide" onload="loadSettings(this)"></li>
+            <li class="slide" onload="loadMenu(this)"></li>
+            <li class="slide" onload="loadInfo(this)"></li>
         </ol>
+
+        <div class="slides-nav"></div>
     </div>
 
     <div id="schedule" class="slide-window" style="display:none">
@@ -276,16 +448,19 @@
             <li class="slide">
                 <div class="slide-container">
                     <button onclick="Toggle(schedule)">
-                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50px" height="50px"
-                            viewBox="0 0 515.1 515.1" style="enable-background:new 0 0 515.1 515.1" xml:space="preserve">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+                            width="50px" height="50px" viewBox="0 0 515.1 515.1"
+                            style="enable-background:new 0 0 515.1 515.1" xml:space="preserve">
                             <g id="access-alarms">
-                                <path d="M512.55,99.45L395.25,0L362.1,38.25l117.3,99.45L512.55,99.45z M153,40.8L119.85,2.55L2.55,99.45L35.7,137.7L153,40.8z     M270.3,158.1h-38.25v153l119.85,73.951l20.4-30.602l-102-61.199V158.1z M257.55,56.1c-127.5,0-229.5,102-229.5,229.5    c0,127.5,102,229.5,229.5,229.5s229.5-102,229.5-229.5C487.05,158.1,385.05,56.1,257.55,56.1z M257.55,464.1    c-99.45,0-178.5-79.049-178.5-178.5c0-99.45,79.05-178.5,178.5-178.5s178.5,79.05,178.5,178.5    C436.05,385.051,357,464.1,257.55,464.1z"
+                                <path
+                                    d="M512.55,99.45L395.25,0L362.1,38.25l117.3,99.45L512.55,99.45z M153,40.8L119.85,2.55L2.55,99.45L35.7,137.7L153,40.8z     M270.3,158.1h-38.25v153l119.85,73.951l20.4-30.602l-102-61.199V158.1z M257.55,56.1c-127.5,0-229.5,102-229.5,229.5    c0,127.5,102,229.5,229.5,229.5s229.5-102,229.5-229.5C487.05,158.1,385.05,56.1,257.55,56.1z M257.55,464.1    c-99.45,0-178.5-79.049-178.5-178.5c0-99.45,79.05-178.5,178.5-178.5s178.5,79.05,178.5,178.5    C436.05,385.051,357,464.1,257.55,464.1z"
                                     style="fill: rgb(145, 220, 90);"></path>
                             </g>
                         </svg>
                     </button>
                 </div>
             </li>
+            <li onload="loadClock(this)"></li>
         </ol>
 
         <div class="slides-nav"></div>
@@ -295,7 +470,7 @@
     <script>
         (function () {
 
-            pages = new Slider(document.getElementById("pages"));
+            pages = new Slider(DOM.geid("pages"));
 
         })();
     </script>
@@ -311,8 +486,12 @@
     <script>
         (function () {
 
-            settings = new Slider(document.getElementById("settings"));
-            schedule = new Slider(document.getElementById("schedule"));
+            settings = new Slider(DOM.geid("settings"));
+            schedule = new Slider(DOM.geid("schedule"));
+
+            if (window.location.href.substring(window.location.href.lastIndexOf("/")) == "/settings") {
+                Toggle(settings);
+            }
 
             Http.import("https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js", true, function () {
 
@@ -320,6 +499,17 @@
                 settings.attachSwipeHandlers();
                 pages.attachSwipeHandlers();
 
+            });
+
+            Http.get("api/settings", function (result) {
+                if (result["disp_name"]) {
+                    document.title = result["disp_name"];
+                }
+
+                var ver = DOM.geid("version");
+                if (result["version"]) {
+                    ver.innerHTML = result["version"];
+                }
             });
         })();
     </script>

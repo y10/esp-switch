@@ -2,8 +2,8 @@
 #define SPRINKLER_WEBSERVER_H
 
 #include <ESPAsyncWebServer.h>
-#include "switch.h"
 #include "switch-settings.h"
+#include "switch-ota.h"
 #include "switch.html.h"
 #include "switch.icon.h"
 
@@ -127,41 +127,7 @@ private:
 
   void respondSettingsRequest(AsyncWebServerRequest *request)
   {
-    bool save = false;
-
-    if (request->hasArg("n"))
-    {
-      if (Settings.dispname(request->arg("n").c_str()))
-      {
-        save = true;
-      }
-    }
-    
-    if (request->hasArg("p"))
-    {
-      if(Settings.pairaddr(request->arg("p").c_str()))
-      {
-        save = true;
-      }
-    }
-
-    if (request->hasArg("h"))
-    {
-      Settings.setHour(request->arg("h").toInt());
-    }
-
-    if (request->hasArg("m"))
-    {
-      Settings.setMinute(request->arg("m").toInt());
-    }
-
     request->send(200, "application/json", Settings.toJSON());
-
-    if(save)
-    {
-      Settings.save();
-      Switch.restart();
-    }
   }
 
   void respond404Request(AsyncWebServerRequest *request)
@@ -228,15 +194,18 @@ public:
 
   void setup(AsyncWebServer &server)
   {
-
     server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondCachedRequest(request, "text/html", SWITCH_INDEX_HTML_GZ, sizeof(SWITCH_INDEX_HTML_GZ));
     });
+    server.on("/settings", HTTP_GET, [&](AsyncWebServerRequest *request) {
+      respondCachedRequest(request, "text/html", SWITCH_INDEX_HTML_GZ, sizeof(SWITCH_INDEX_HTML_GZ));
+    });
+
     server.on("/icon.png", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondCachedRequest(request, "image/png", SWITCH_ICON_PNG_GZ, sizeof(SWITCH_ICON_PNG_GZ));
     });
     server.on("/apple-touch-icon.png", HTTP_GET, [&](AsyncWebServerRequest *request) {
-      respondCachedRequest(request, "image/png", SWITCH_ICON_PNG_GZ, sizeof(SWITCH_ICON_PNG_GZ));
+      respondCachedRequest(request, "image/png", SWITCH_APPLE_TOUCH_ICON_PNG_GZ, sizeof(SWITCH_APPLE_TOUCH_ICON_PNG_GZ));
     });
 
     server.on("/manifest.json", HTTP_GET, [&](AsyncWebServerRequest *request) {
@@ -248,6 +217,27 @@ public:
     });
     server.on("/restart", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondRestartRequest(request);
+    });
+
+    server.on("/update", HTTP_POST, [&](AsyncWebServerRequest *request) {
+      respondSettingsRequest(request);
+    }, NULL, [&](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+      
+      DynamicJsonBuffer jsonBuffer;
+      JsonObject &json = jsonBuffer.parseObject(data, len);
+      if (json.success())
+      {
+        if(json.containsKey("upds_addr"))
+        {
+          String upds_addr = json["upds_addr"]; 
+          Settings.updsaddr(upds_addr.c_str());
+          Settings.save();
+        }
+      }
+
+      String url = Settings.updsaddr();
+      Log.printf("[Firmware] Updating from %s\n", url.c_str());
+      OTA.update(url);
     });
 
     server.on("/api/state", HTTP_GET, [&](AsyncWebServerRequest *request) {
@@ -278,7 +268,6 @@ public:
           }
         }
       }
-
     });
 
     server.on("/api/on", HTTP_GET, [&](AsyncWebServerRequest *request) {
@@ -292,7 +281,7 @@ public:
     });
 
     server.on("/digital/1", HTTP_GET, [&](AsyncWebServerRequest *request) {
-         respondStateRequest(request);
+      respondStateRequest(request);
     });
     server.on("/digital/1/1", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondTurnOnRequest(request);
@@ -303,6 +292,96 @@ public:
 
     server.on("/api/settings", HTTP_GET, [&](AsyncWebServerRequest *request) {
       respondSettingsRequest(request);
+    });
+    server.on("/api/settings", HTTP_POST, [&](AsyncWebServerRequest *request) {
+      respondSettingsRequest(request);
+    }, NULL, [&](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+      
+      DynamicJsonBuffer jsonBuffer;
+      JsonObject &json = jsonBuffer.parseObject(data, len);
+      if (json.success())
+      {
+        bool restart = false;
+
+        if(json.containsKey("disp_name"))
+        {
+          String disp_name = json["disp_name"]; 
+          Settings.dispname(disp_name.c_str());
+          Settings.save();
+          restart = true;
+        }
+
+        if(json.containsKey("upds_addr"))
+        {
+          String upds_addr = json["upds_addr"]; 
+          Settings.updsaddr(upds_addr.c_str());
+          Settings.save();
+        }
+
+        if(json.containsKey("mqtt_addr"))
+        {
+          String mqtt_addr = json["mqtt_addr"]; 
+          String mqtt_host = mqtt_addr;
+          String mqtt_port = "80";
+          int index = mqtt_addr.indexOf(":");
+          if (index != -1) 
+          {
+            mqtt_host = mqtt_addr.substring(0, index);
+            mqtt_port = mqtt_addr.substring(index + 1);
+          }
+          Settings.mqtthost(mqtt_host.c_str());
+          Settings.mqttport(mqtt_port.toInt());
+          Settings.save();
+          restart = true;
+        }
+
+        if(json.containsKey("mqtt_host"))
+        {
+          String mqtt_host = json["mqtt_host"]; 
+          Settings.mqtthost(mqtt_host.c_str());
+          Settings.save();
+          restart = true;
+        }
+
+        if(json.containsKey("mqtt_port"))
+        {
+          String mqtt_port = json["mqtt_port"]; 
+          Settings.mqttport(mqtt_port.toInt());
+          Settings.save();
+          restart = true;
+        }
+
+        if(json.containsKey("mqtt_user"))
+        {
+          String mqtt_user = json["mqtt_user"]; 
+          Settings.mqttuser(mqtt_user.c_str());
+          Settings.save();
+          restart = true;
+        }
+
+        if(json.containsKey("mqtt_pwrd"))
+        {
+          String mqtt_pwrd = json["mqtt_pwrd"]; 
+          Settings.mqttpwrd(mqtt_pwrd.c_str());
+          Settings.save();
+          restart = true;
+        }
+
+        if(json.containsKey("time_hour"))
+        {
+            Settings.setHour(json["time_hour"]);       
+        }
+
+        if(json.containsKey("time_min"))
+        {
+          Settings.setMinute(json["time_min"]);       
+        }
+
+        if (restart)
+        {
+          Switch.restart();
+        }
+      }
     });
 
     server.on("/api/schedule/mon", HTTP_GET, [&](AsyncWebServerRequest *request) {

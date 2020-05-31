@@ -1,9 +1,21 @@
 #ifndef SWITCH_SETTINGS_H
 #define SWITCH_SETTINGS_H
 
-#include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
+#include <EEPROM.h>
 #include <Time.h>
+#include <base64.h>
 #include "switch.h"
+#define EEPROM_SIZE 1024
+
+struct SwitchConfig {
+  uint8_t version;
+  char disp_name[50];
+  char upds_addr[50];
+  char mqtt_host[50];
+  uint16_t mqtt_port;
+  char mqtt_user[50];
+  char mqtt_pwrd[50];
+};
 
 class SwitchSettings
 {
@@ -12,6 +24,7 @@ private:
   String disp_name;
   String safe_name;
   String pair_addr;
+  String upds_addr;
   String mqtt_host;
   String mqtt_port;
   String mqtt_user;
@@ -24,7 +37,8 @@ public:
     disp_name = "Switch";
     safe_name = "switch";
     host_name = "switch-" + String(ESP.getChipId(), HEX);
-    mqtt_host = "mqqt";
+    upds_addr = "http://ota.voights.net/switch.bin";
+    mqtt_host = "";
     mqtt_port = 1883;
     mqtt_user = "homeassistant";
     mqtt_pwrd = "123456";
@@ -78,36 +92,58 @@ public:
     return false;
   }
 
+  const String updsaddr() const {
+    return upds_addr;
+  }
+
+  const String updsaddr(const char* addr){
+    upds_addr = addr;
+    
+    if (upds_addr.indexOf("://") == -1)
+    {
+      upds_addr = "http://" + upds_addr;
+    }
+
+    return upds_addr;
+  }
+
   const String mqtthost() const {
     return mqtt_host;
   }
 
-  void mqtthost(const char* host){
-    if (strlen(host) > 0) mqtt_host = host;
+  const String mqtthost(const char* host){
+    mqtt_host = host;
+    return mqtt_host;
   }
 
   const String mqttport() const {
     return mqtt_port;
   }
 
-  void mqttport(int port){
-    if (port > 0) mqtt_port = port;
+  bool mqttport(int port){
+    if (port > 0) {
+       mqtt_port = port;
+       return true;
+    }
+    return false;
   }
 
   const String mqttuser() const {
     return mqtt_user;
   }
 
-  void mqttuser(const char* user){
-    if (strlen(user) > 0) mqtt_user = user;
+  const String mqttuser(const char* user){
+    mqtt_user = user;
+    return mqtt_user;
   }
 
   const String mqttpwrd() const {
     return mqtt_pwrd;
   }
 
-  void mqttpwrd(const char* pwrd){
+  const String mqttpwrd(const char* pwrd){
     mqtt_pwrd = pwrd;
+    return mqtt_pwrd;
   }
 
   time_t getBuildDate()
@@ -155,103 +191,84 @@ public:
 
   void load()
   {
-    //read configuration from FS json
-    Serial.println("[SETTINGS] mounting FS...");
-
-    if (SPIFFS.begin())
+    Serial.println("[EEPROM] reading...");
+    EEPROM.begin(EEPROM_SIZE);
+    SwitchConfig config;
+    EEPROM.get(0, config);
+    if(config.version == 1) 
     {
-      Serial.println("[SETTINGS] mounted file system");
-      if (SPIFFS.exists("/config.json"))
-      {
-        //file exists, reading and loading
-        Serial.println("[SETTINGS] reading config file");
-        File configFile = SPIFFS.open("/config.json", "r");
-        if (configFile)
-        {
-          Serial.println("[SETTINGS] opened config file");
-          size_t size = configFile.size();
-          // Allocate a buffer to store contents of the file..0
-          std::unique_ptr<char[]> buf(new char[size]);
-          configFile.readBytes(buf.get(), size);
-
-          DynamicJsonBuffer jsonBuffer;
-          JsonObject &json = jsonBuffer.parseObject(buf.get());
-          if (json.success())
-          {
-            Serial.println("[SETTINGS] parsed json");
-            json.printTo(Serial);
-
-            if (json.containsKey("disp_name")) dispname(json["disp_name"]);
-            if (json.containsKey("pair_addr")) pairaddr(json["pair_addr"]);
-            if (json.containsKey("mqtt_host")) mqtthost(json["mqtt_host"]);
-            if (json.containsKey("mqtt_port")) mqttport(json["mqtt_port"]);
-            if (json.containsKey("mqtt_user")) mqttuser(json["mqtt_user"]);
-            if (json.containsKey("mqtt_pwrd")) mqttpwrd(json["mqtt_pwrd"]);
-          }
-          else
-          {
-            Serial.println("[SETTINGS] failed to load json config");
-          }
-        }
-      }
+        dispname(config.disp_name);
+        updsaddr(config.upds_addr);
+        mqtthost(config.mqtt_host);
+        mqttport(config.mqtt_port);
+        mqttuser(config.mqtt_user);
+        mqttpwrd(config.mqtt_pwrd);
     }
     else
     {
-      Serial.println("[SETTINGS] failed to mount FS");
+      Serial.println("[EEPROM] not found.");
     }
   }
 
-  void setupMQTT(AsyncMqttClient& mqttClient)
+  bool setupMQTT(AsyncMqttClient& mqttClient)
   {
     IPAddress mqtt_ip;
 
-    if (mqtt_ip.fromString(mqtt_host))
+    if (mqtt_host.length() > 0)
     {
-      mqttClient.setServer(mqtt_ip, mqtt_port.toInt());
+      if (mqtt_ip.fromString(mqtt_host))
+      {
+        mqttClient.setServer(mqtt_ip, mqtt_port.toInt());
+      }
+      else
+      {
+        mqttClient.setServer(mqtt_host.c_str(), mqtt_port.toInt());
+      }
+      
+      mqttClient.setKeepAlive(30);
+      mqttClient.setCredentials(mqtt_user.c_str(), (mqtt_pwrd.length() == 0) ? nullptr : mqtt_pwrd.c_str());
+      mqttClient.setClientId(host_name.c_str());
+      mqtt = &mqttClient;
+      return true;
     }
-    else
-    {
-      mqttClient.setServer(mqtt_host.c_str(), mqtt_port.toInt());
-    }
-    
-    mqttClient.setKeepAlive(5);
-    mqttClient.setCredentials(mqtt_user.c_str(), (mqtt_pwrd.length() == 0) ? nullptr : mqtt_pwrd.c_str());
-    mqttClient.setClientId(host_name.c_str());
-    mqtt = &mqttClient;
+
+    return false;
   }
 
   void save()
   {
-    Serial.println("[MAIN] saving config");
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &json = jsonBuffer.createObject();
-
-    json["disp_name"] = disp_name.c_str();
-    json["pair_addr"] = pair_addr.c_str();
-    json["mqtt_host"] = mqtt_host.c_str();
-    json["mqtt_port"] = mqtt_port.toInt();
-    json["mqtt_user"] = mqtt_user.c_str();
-    json["mqtt_pwrd"] = mqtt_pwrd.c_str();
-
-    File configFile = SPIFFS.open("/config.json", "w");
-    if (!configFile)
-    {
-      Serial.println("[MAIN] failed to open config file for writing");
-    }
-
-    json.printTo(Serial);
-    Serial.println();
-    json.printTo(configFile);
-    configFile.close();
+    Serial.println("[EEPROM] saving");
+    SwitchConfig config = {1, 0, 0, 0, mqtt_port.toInt(), 0, 0 };
+    strcpy(config.disp_name, disp_name.c_str());
+    strcpy(config.upds_addr, upds_addr.c_str());
+    strcpy(config.mqtt_host, mqtt_host.c_str());
+    strcpy(config.mqtt_user, mqtt_user.c_str());
+    strcpy(config.mqtt_pwrd, mqtt_pwrd.c_str());
+    EEPROM.put(0, config);
+    EEPROM.commit();
   }
+
+  
+  void clear()
+  {
+    Serial.println("[EEPROM] clear");
+    for (int i = 0 ; i < EEPROM.length() ; i++) {
+      EEPROM.write(i, 0);
+    }
+    EEPROM.commit();
+  }
+
 
   String toJSON()
   {
+    base64 b;
     return (String) "{" +
-    "\r\n  \"disp_name\": \"" + (String)disp_name + "\"" +
-    "\r\n ,\"host_name\": \"" + (String)host_name + "\"" 
-    + (pair_addr.length() > 0 ? "\r\n ,\"pair_addr\": \"" + pair_addr + "\"" : "") +
-    "\r\n ,\"mqtt_host\": \"" + (String)mqtt_host + ":" + (String)mqtt_port + "\"" +
+    "\r\n  \"disp_name\": \"" + disp_name + "\"" +
+    "\r\n ,\"host_name\": \"" + host_name + "\"" 
+    "\r\n ,\"upds_addr\": \"" + upds_addr + "\"" 
+    "\r\n ,\"mqtt_addr\": \"" + mqtt_host + ":" + (String)mqtt_port + "\"" +
+    "\r\n ,\"mqtt_user\": \"" + mqtt_user + "\"" 
+    "\r\n ,\"mqtt_pwrd\": \"" + b.encode(mqtt_pwrd) + "\"" 
     "\r\n ,\"mqtt_conn\": \"" + (String)(mqtt && mqtt->connected()) + "\"" 
      + ((timeStatus() != timeNotSet) ? "\r\n ,\"time\": \"" + (String)hour() + ":" + (String)minute() + "\"" : "") +
     "\r\n}";

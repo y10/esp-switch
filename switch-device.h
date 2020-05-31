@@ -171,7 +171,7 @@ public:
     Serial.println("[MAIN] Factory reset requested.");
 
     WiFi.disconnect(true);
-    SPIFFS.format();
+    Settings.clear();
     ESP.restart();
 
     delay(5000);
