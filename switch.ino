@@ -94,11 +94,11 @@ void setupSwitch()
   });
 
   Switch.onTurnOn([&]() {
-    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 1, true, "{\"POWER\": \"ON\"}");
+    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 2, true, "{\"POWER\": \"ON\"}");
     Device.turnOn();
   });
   Switch.onTurnOff([&]() {
-    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 1, true, "{\"POWER\": \"OFF\"}");
+    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 2, true, "{\"POWER\": \"OFF\"}");
     Device.turnOff();
   });
 
@@ -250,11 +250,11 @@ void setupMQTT()
     uint16_t packetIdSub = mqttClient.subscribe(String("cmnd/" + (String)Settings.safename() + "/POWER").c_str(), 2);
     Log.println("Subscribing at QoS 2, packetId: " + String(packetIdSub));
     
-    uint16_t packetIdPub1 = mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 1, true, String("{\"POWER\": \"" + (String)(Switch.isOn() ? "ON" : "OFF") + "\"}").c_str());
-    Log.println("Publishing at QoS 1, packetId: " + String(packetIdPub1));
+    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 2, true, String("{\"POWER\": \"" + (String)(Switch.isOn() ? "ON" : "OFF") + "\"}").c_str());
     
-    uint16_t packetIdPub2 = mqttClient.publish(String("tele/" + (String)Settings.safename() + "/LWT").c_str(), 2, true, "Online");
-    Log.println("Publishing at QoS 2, packetId: " + String(packetIdPub2));
+    mqttClient.publish(String("tele/" + (String)Settings.safename() + "/LWT").c_str(), 0, false, "Online");
+
+    mqttClient.publish(String("stat/" + (String)Settings.safename() + "/RESULT").c_str(), 2, true, String("{\"POWER\": \"" + (String)(Switch.isOn() ? "ON" : "OFF") + "\"}").c_str());
   });
 
   mqttClient.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
@@ -282,7 +282,7 @@ void setupMQTT()
     "\r\n  dup: " + String(properties.dup) + 
     "\r\n  retain: " + String(properties.retain));
 
-    if (strcmp(topic, "cmnd/halloween_lights/POWER") == 0) {
+    if (strcmp(topic, String("cmnd/" + (String)Settings.safename() + "/POWER").c_str()) == 0) {
       if (message == "ON") {
         Switch.turnOn();
       } else {
@@ -290,6 +290,7 @@ void setupMQTT()
       }
     }
 
+    mqttClient.publish(String("tele/" + (String)Settings.safename() + "/LWT").c_str(), 0, false, "Online");
   });
 
   Settings.setupMQTT(mqttClient);

@@ -1,7 +1,7 @@
 Http = (function () {
     return {
 
-        get: function (service, onSuccess, OnError) {
+        get: function (service, onSuccess, onError) {
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
                 if (this.readyState == 4 && this.status == 200) {
@@ -12,7 +12,20 @@ Http = (function () {
             xhttp.send();
         },
 
-        getScript: function (file, async, onLoad) {
+        post: function (service, json, onSuccess, onError) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    onSuccess(JSON.parse(this.responseText));
+                }
+            };
+
+            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhttp.open('POST', service, true);
+            xhttp.send(JSON.stringify(json));
+        },
+
+        import: function (file, async, onLoad) {
 
             var scriptTag = document.createElement("script");
             scriptTag.src = file;
@@ -26,14 +39,5 @@ Http = (function () {
                 document.body.appendChild(scriptTag);
             }
         },
-
-        getXml: function (file, onLoad) {
-            var loadXml = new XMLHttpRequest;
-            loadXml.onload = function (e) {
-                onLoad(new DOMParser().parseFromString(loadXml.responseText, "text/xml").documentElement);
-            };
-            loadXml.open("GET", file, true);
-            loadXml.send();
-        }
     }
 })();

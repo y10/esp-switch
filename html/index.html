@@ -202,14 +202,13 @@
             transform: rotate(45deg) translate(-8px, -8px);
         }
     </style>
+    <script src="./js/app.js"></script> 
     <script src="./js/slider.js"></script>
-    <script src="./js/services/http-service.js"></script>
-    <script src="./js/services/wss-service.js"></script>
-    <script src="./js/app/app.dom.js"></script>
-    <script src="./js/app/app.modules.js"></script>
-    <script src="./js/modules/switch-module.js"></script>
-    <script src="./js/modules/schedule-module.js"></script>
-    <script src="./js/modules/settings-module.js"></script>
+    <script src="./js/http.mock.js"></script>
+    <script src="./js/wss.js"></script>
+    <script src="./js/modules/switch.js"></script>
+    <script src="./js/modules/schedule.js"></script>
+    <script src="./js/modules/settings.js"></script>
     <script>
         function Toggle(slides) {
 
@@ -307,7 +306,7 @@
         <div class="bar3"></div>
     </div>
 
-    <div id="version">v1.7.0</div>
+    <div id="version">v1.7.1</div>
 
     <script>
         (function () {
@@ -315,7 +314,7 @@
             settings = new Slider(document.getElementById("settings"));
             schedule = new Slider(document.getElementById("schedule"));
 
-            Http.getScript("https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js", true, function () {
+            Http.import("https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js", true, function () {
 
                 schedule.attachSwipeHandlers();
                 settings.attachSwipeHandlers();

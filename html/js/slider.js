@@ -23,6 +23,13 @@ function Slider(el) {
     }
 
     this.Hide = function () {
+
+        if (typeof (slidesElement.selectedIndex) !== 'undefined') {
+            deactivate(slidesElement.selectedIndex);
+        }
+        else if (slidesElement.childElementCount > 0) {
+            deactivate(0);
+        }
         sliderWindow.style.display = 'none';
     }
 

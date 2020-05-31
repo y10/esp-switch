@@ -1,3 +1,5 @@
+if (typeof app.modules === "undefined") { app.modules = {} }
+
 app.modules.main = (function (http, wss) {
     
     return {
@@ -36,21 +38,6 @@ app.modules.main = (function (http, wss) {
 
                 return label;
             }
-
-            function createTimeElement() {
-
-                var element = document.createElement("div");
-
-                element.redraw = function (result) {
-                    if (result) {
-                        if (typeof result.time !== "undefined") {
-                            element.innerText = result.time;
-                        }
-                    }
-                }
-
-                return element;
-            }                  
 
             el.className = 'slide color-0 alive';
             var btn = createButton();

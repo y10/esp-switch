@@ -16,6 +16,7 @@ private:
   String mqtt_port;
   String mqtt_user;
   String mqtt_pwrd;
+  AsyncMqttClient * mqtt;
 
 public:
   SwitchSettings()
@@ -27,6 +28,7 @@ public:
     mqtt_port = 1883;
     mqtt_user = "homeassistant";
     mqtt_pwrd = "123456";
+    mqtt = nullptr;
   }
 
   const String hostname() const {
@@ -215,6 +217,7 @@ public:
     mqttClient.setKeepAlive(5);
     mqttClient.setCredentials(mqtt_user.c_str(), (mqtt_pwrd.length() == 0) ? nullptr : mqtt_pwrd.c_str());
     mqttClient.setClientId(host_name.c_str());
+    mqtt = &mqttClient;
   }
 
   void save()
@@ -244,7 +247,14 @@ public:
 
   String toJSON()
   {
-    return "{\r\n" + ((timeStatus() != timeNotSet) ? " \"time\": \"" + (String)hour() + ":" + (String)minute() + "\",\r\n" : "") + " \"name\": \"" + disp_name + "\",\r\n" + " \"addr\": \"" + pair_addr + "\" " + "\r\n}";
+    return (String) "{" +
+    "\r\n  \"disp_name\": \"" + (String)disp_name + "\"" +
+    "\r\n ,\"host_name\": \"" + (String)host_name + "\"" 
+    + (pair_addr.length() > 0 ? "\r\n ,\"pair_addr\": \"" + pair_addr + "\"" : "") +
+    "\r\n ,\"mqtt_host\": \"" + (String)mqtt_host + ":" + (String)mqtt_port + "\"" +
+    "\r\n ,\"mqtt_conn\": \"" + (String)(mqtt && mqtt->connected()) + "\"" 
+     + ((timeStatus() != timeNotSet) ? "\r\n ,\"time\": \"" + (String)hour() + ":" + (String)minute() + "\"" : "") +
+    "\r\n}";
   }
 };
 

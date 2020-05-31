@@ -94,7 +94,7 @@ gulp.task('html', function() {
             minifyCSS: true,
             minifyJS: true
         }))
-        //.pipe(gzip())
+        .pipe(gzip())
         .pipe(gulp.dest('data'))
 })
 
